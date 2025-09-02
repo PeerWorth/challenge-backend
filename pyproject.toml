@@ -1,3 +1,29 @@
+[tool.black]
+line-length = 120
+target-version = ['py312']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 120
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app", "data", "dependencies", "tests"]
+ignore_missing_imports = true
+strict_optional = true
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+
+[tool.flake8]
+max-line-length = 120
+ignore = ["E203","W501","W503"]
+
 [project]
 name = "challenge-backend"
 version = "0.1.0"
@@ -5,7 +31,18 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.16.5",
+    "dotenv>=0.9.9",
     "fastapi>=0.116.1",
     "mangum>=0.19.0",
+    "sqlalchemy>=2.0.43",
     "uvicorn>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "flake8>=7.3.0",
+    "isort>=6.0.1",
+    "mypy>=1.17.1",
 ]
