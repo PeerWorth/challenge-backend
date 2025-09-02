@@ -1,0 +1,31 @@
+service: challenge-backend
+
+provider:
+  name: aws
+  runtime: python3.12
+  region: ap-northeast-2
+  stage: ${opt:stage, 'dev'}
+
+functions:
+  api:
+    handler: main.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      - httpApi:
+          path: /
+          method: ANY
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    fileName: ../requirements.txt
+
+package:
+  individually: false
+  patterns:
+    - '../main.py'
