@@ -12,10 +12,25 @@
 challenge-backend/
 ├── main.py                  # FastAPI application entry point (root level)
 ├── __init__.py              # Makes root a Python package
+├── app/                     # Application code
+│   ├── __init__.py
+│   ├── api/                 # API endpoints
+│   │   └── __init__.py
+│   ├── common/              # Common utilities
+│   │   ├── __init__.py
+│   │   └── enums.py         # Environment and other enums
+│   ├── database/            # Database configuration
+│   │   ├── __init__.py
+│   │   ├── config.py        # Database connection setup
+│   │   ├── constant.py      # Database constants
+│   │   └── dependency.py    # Database dependency injection
+│   └── module/              # Business logic modules
+│       └── __init__.py
 ├── infra/
 │   ├── package.json         # Serverless plugin dependencies
 │   ├── package-lock.json
 │   └── serverless.yml       # Serverless Framework configuration
+├── .pre-commit-config.yaml  # Pre-commit hooks configuration
 ├── Dockerfile               # Docker containerization
 ├── docker-compose.yml       # Docker Compose configuration
 ├── pyproject.toml           # Python project configuration
@@ -30,9 +45,19 @@ challenge-backend/
 - **Web Framework**: FastAPI 0.116.1
 - **ASGI Adapter**: Mangum 0.19.0 (for AWS Lambda)
 - **ASGI Server**: Uvicorn 0.35.0
+- **Database**: 
+  - SQLAlchemy 2.0.43 (Async ORM)
+  - Alembic 1.16.5 (Database migrations)
+  - MySQL (async driver)
 - **Package Manager**: UV
 - **Infrastructure**: Serverless Framework
 - **Cloud Provider**: AWS (ap-northeast-2 region)
+- **Code Quality Tools**:
+  - Black (Code formatter)
+  - isort (Import sorter)
+  - Flake8 (Linter)
+  - MyPy (Type checker)
+  - Pre-commit hooks
 
 ## Development Commands
 
@@ -65,15 +90,27 @@ docker run -p 8000:8000 backend:latest
 
 ### Serverless Deployment
 
+#### Environment Setup
+```bash
+# .env 파일 생성 (.env.example 참고)
+cp .env.example .env
+
+# 필수 환경변수 설정
+export DB_NAME=challenge
+export DB_USER=root
+export DB_PASSWORD=your_secure_password
+export SERVERLESS_ORG=your_org_name
+```
+
 #### Manual Deployment
 ```bash
 # Install serverless dependencies
 cd infra && npm install
 
-# Deploy to dev stage
+# Deploy to dev stage (환경변수 필요)
 cd infra && make deploy-dev
 
-# Deploy to production stage
+# Deploy to production stage (환경변수 필요)
 cd infra && make deploy-prod
 
 # Remove deployment
@@ -96,8 +133,37 @@ cd infra && make remove-prod
 ## API Endpoints
 - `GET /health` - Health check endpoint
 
+## Database Architecture
+- **Environment-based Configuration**: Database URL is determined by ENVIRONMENT variable
+- **Connection Pooling**: 
+  - Pool size: Configurable via constants
+  - Max overflow: Configurable via constants
+  - Pool timeout: Configurable timeout for pool connections
+  - Connection timeout: Configurable timeout for database connections
+- **Async Support**: Uses SQLAlchemy async engine with async_sessionmaker
+
 ## Configuration
 - **AWS Region**: ap-northeast-2 (Seoul)
 - **Default Stage**: dev
 - **Lambda Handler**: ../src/main.handler
 - **Python Requirements**: Uses Docker for pip installation
+- **Required Environment Variables**:
+  - `DB_NAME`: 데이터베이스 이름 (기본값: challenge)
+  - `DB_USER`: 데이터베이스 사용자 (기본값: root)
+  - `DB_PASSWORD`: 데이터베이스 비밀번호 (필수, 기본값 없음)
+  - `ENVIRONMENT`: 환경 구분 (dev/prod)
+  - `SERVERLESS_ORG`: Serverless Framework 조직명 (배포 시 필요)
+
+## Important Notes
+- SQLAlchemy async sessions require `async_sessionmaker` instead of regular `sessionmaker`
+- Database configuration is centralized in `app/database/config.py`
+- Environment validation ensures only valid environment types are used
+
+## AI Assistant Instructions (한국어 응답)
+이 프로젝트에서 작업할 때는 다음 지침을 따르세요:
+1. **언어**: 모든 응답은 한국어로 작성합니다.
+2. **코드 스타일**: Black, isort 포맷터 규칙을 따릅니다 (line-length: 120).
+3. **타입 힌팅**: 가능한 모든 곳에 타입 힌팅을 사용합니다.
+4. **비동기 프로그래밍**: FastAPI와 SQLAlchemy는 모두 async/await 패턴을 사용합니다.
+5. **에러 처리**: 명확한 에러 메시지를 한국어로 제공합니다.
+6. **보안**: 환경 변수를 통해 민감한 정보를 관리합니다.
