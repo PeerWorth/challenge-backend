@@ -1,4 +1,5 @@
 service: challenge-backend
+frameworkVersion: '4'
 
 provider:
   name: aws
