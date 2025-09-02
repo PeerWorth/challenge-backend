@@ -64,19 +64,32 @@ docker run -p 8000:8000 backend:latest
 ```
 
 ### Serverless Deployment
+
+#### Manual Deployment
 ```bash
 # Install serverless dependencies
 cd infra && npm install
 
 # Deploy to dev stage
-cd infra && serverless deploy
+cd infra && make deploy-dev
 
-# Deploy to specific stage
-cd infra && serverless deploy --stage prod
+# Deploy to production stage
+cd infra && make deploy-prod
 
 # Remove deployment
-cd infra && serverless remove
+cd infra && make remove-dev
+cd infra && make remove-prod
 ```
+
+#### Automated Deployment (CI/CD)
+- **Dev → Prod**: PR merge to `main` branch automatically deploys to production
+- **Versioning**: `v2024.09.02-abc1234` format (date + commit hash)
+- **GitHub Release**: Automatically created with deployment info
+- **Health Check**: Automatic API health validation after deployment
+
+**Required GitHub Secrets:**
+- `AWS_ACCESS_KEY_ID`: AWS access key
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key
 
 ## API Endpoints
 - `GET /health` - Health check endpoint
