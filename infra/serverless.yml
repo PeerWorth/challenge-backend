@@ -1,5 +1,6 @@
 service: challenge-backend
 frameworkVersion: '4'
+org: ${env:SERVERLESS_ORG, ''}
 
 provider:
   name: aws

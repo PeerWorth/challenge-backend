@@ -90,6 +90,8 @@ cd infra && make remove-prod
 **Required GitHub Secrets:**
 - `AWS_ACCESS_KEY_ID`: AWS access key
 - `AWS_SECRET_ACCESS_KEY`: AWS secret key
+- `SERVERLESS_ACCESS_KEY`: Serverless Framework access token
+- `SERVERLESS_ORG`: Serverless organization name
 
 ## API Endpoints
 - `GET /health` - Health check endpoint
