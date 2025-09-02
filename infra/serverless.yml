@@ -27,3 +27,5 @@ custom:
 
 package:
   individually: false
+  patterns:
+    - '../main.py'
