@@ -196,6 +196,10 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# Serverless Framework
+.requirements.zip
+.serverless/
+
 # PyPI configuration file
 .pypirc
 

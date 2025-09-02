@@ -8,7 +8,7 @@ provider:
 
 functions:
   api:
-    handler: ../main.handler
+    handler: main.handler
     events:
       - httpApi:
           path: /{proxy+}
@@ -24,3 +24,6 @@ custom:
   pythonRequirements:
     dockerizePip: true
     fileName: ../requirements.txt
+
+package:
+  individually: false
