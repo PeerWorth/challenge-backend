@@ -21,7 +21,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: !Ref Environment
+      StageName: $default
       CorsConfiguration:
         AllowOrigins:
           - "*"
@@ -57,4 +57,4 @@ Resources:
 Outputs:
   ApiUrl:
     Description: API Gateway 엔드포인트 URL
-    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com

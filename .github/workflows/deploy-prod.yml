@@ -49,4 +49,4 @@ jobs:
         run: sam deploy --config-env prod --no-confirm-changeset --no-fail-on-empty-changeset
 
       - name: 배포 완료
-        run: echo "✅ 프로덕션 배포가 완료되었습니다!"
+        run: echo "프로덕션 배포가 완료되었습니다!"
