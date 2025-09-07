@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Challenge Backend API - FastAPI Lambda 배포
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.12
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: 환경 구분 (dev/prod)
+
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - "*"
+        AllowHeaders:
+          - "*"
+
+  ServerAPIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub challenge-backend-${Environment}
+      CodeUri: ../../
+      Handler: main.handler
+      Description: Challenge Backend 애플리케이션
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /{proxy+}
+            Method: ANY
+        RootApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGateway
+            Path: /
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway 엔드포인트 URL
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
