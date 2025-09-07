@@ -7,9 +7,18 @@ class EnvironmentType(StrEnum):
     PROD = "prod"
 
     @property
-    def log_env(self) -> str:
-        return self.value
-
+    def dynamodb_url(self) -> str:
+        """환경별 DynamoDB URL"""
+        env_keys = {
+            EnvironmentType.DEV: "DEV_DYNAMODB_URL",
+            EnvironmentType.PROD: "PROD_DYNAMODB_URL",
+        }
+        key = env_keys[self]
+        url = getenv(key)
+        if not url:
+            raise ValueError(f"{key} 환경변수가 설정되지 않았습니다.")
+        return url
+    
     @property
     def db_url(self) -> str:
         """환경별 데이터베이스 URL"""
