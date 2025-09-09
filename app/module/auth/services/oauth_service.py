@@ -1,8 +1,11 @@
 import httpx
 from dotenv import load_dotenv
 from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.generic_repository import GenericRepository
 from app.module.auth.error import InvalidKakaoTokenException, MissingSocialIDException
+from app.module.auth.model import User
 
 load_dotenv()
 
@@ -11,7 +14,20 @@ KAKAO_TOKEN_INFO_URL = "https://kauth.kakao.com/oauth/tokeninfo"
 
 class AuthService:
     def __init__(self):
-        pass
+        self.user_repository = GenericRepository(User)
+
+    async def find_or_create_user(self, session: AsyncSession, social_id: str) -> bool:
+
+        existing_user = await self.user_repository.find_one(session, social_id=social_id)
+
+        if existing_user:
+            return False
+
+        await self.user_repository.create(
+            session, social_id=social_id, nickname=None, birthday=None, gender=None, phone=None
+        )
+
+        return True
 
     async def verify_kakao_token(self, id_token: str) -> str:
         data = {"id_token": id_token}
