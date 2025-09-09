@@ -58,9 +58,9 @@ resource "aws_db_instance" "mysql" {
   skip_final_snapshot = true
 
   auto_minor_version_upgrade = true
-  
+
   allow_major_version_upgrade = true
-  
+
   apply_immediately = false
 
   tags = {

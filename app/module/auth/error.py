@@ -17,8 +17,8 @@ class NoKakaoURLException(AuthException):
 class InvalidKakaoTokenException(AuthException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "유효하지 않은 Kakao ID Token입니다."
-    
-    
+
+
 class MissingSocialIDException(AuthException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "ID Token에 유저 ID가 없습니다."
@@ -27,5 +27,3 @@ class MissingSocialIDException(AuthException):
 class NoJWTSecretException(AuthException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "ID Token에 유저 ID가 없습니다."
-    
-    

@@ -12,7 +12,7 @@ line_length = 120
 
 [tool.mypy]
 python_version = "3.12"
-files = ["app", "data", "dependencies", "tests"]
+files = ["app", "main.py"]
 ignore_missing_imports = true
 strict_optional = true
 no_implicit_optional = true
@@ -25,7 +25,7 @@ max-line-length = 120
 ignore = ["E203","W501","W503"]
 
 [project]
-name = "challenge-backend"
+name = "challenge_backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"

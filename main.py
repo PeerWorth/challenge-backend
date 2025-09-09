@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from mangum import Mangum
-from app.api.auth.v1.router import auth_router
 
+from app.api.auth.v1.router import auth_router
 
 app = FastAPI()
 

@@ -18,7 +18,7 @@ class EnvironmentType(StrEnum):
         if not url:
             raise ValueError(f"{key} 환경변수가 설정되지 않았습니다.")
         return url
-    
+
     @property
     def db_url(self) -> str:
         env_keys = {
@@ -35,7 +35,6 @@ class EnvironmentType(StrEnum):
 class Timezone(StrEnum):
     UTC = "UTC"
     KST = "Asia/Seoul"
-    
+
     def get_zone_info(self) -> ZoneInfo:
         return ZoneInfo(self.value)
-

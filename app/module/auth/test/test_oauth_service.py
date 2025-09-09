@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi import status
-from app.module.auth.services.oauth_service import AuthService
+
 from app.module.auth.error import InvalidKakaoTokenException, MissingSocialIDException
+from app.module.auth.services.oauth_service import AuthService
 
 
 class TestAuthService:
@@ -107,14 +109,14 @@ class TestAuthService:
         # Given
         token1 = "token_1"
         token2 = "token_2"
-        
+
         response1 = {**mock_kakao_response_success, "sub": "user_1"}
         response2 = {**mock_kakao_response_success, "sub": "user_2"}
-        
+
         mock_response1 = MagicMock()
         mock_response1.status_code = status.HTTP_200_OK
         mock_response1.json.return_value = response1
-        
+
         mock_response2 = MagicMock()
         mock_response2.status_code = status.HTTP_200_OK
         mock_response2.json.return_value = response2
@@ -122,12 +124,12 @@ class TestAuthService:
         # When & Then
         with patch("httpx.AsyncClient") as mock_client:
             mock_client_instance = AsyncMock()
-            
+
             # 첫 번째 토큰 검증
             mock_client_instance.post.return_value = mock_response1
             mock_client.return_value.__aenter__.return_value = mock_client_instance
             result1 = await auth_service.verify_kakao_token(token1)
-            
+
             # 두 번째 토큰 검증
             mock_client_instance.post.return_value = mock_response2
             result2 = await auth_service.verify_kakao_token(token2)

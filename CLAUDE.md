@@ -45,7 +45,7 @@ challenge-backend/
 - **Web Framework**: FastAPI 0.116.1
 - **ASGI Adapter**: Mangum 0.19.0 (for AWS Lambda)
 - **ASGI Server**: Uvicorn 0.35.0
-- **Database**: 
+- **Database**:
   - SQLAlchemy 2.0.43 (Async ORM)
   - Alembic 1.16.5 (Database migrations)
   - MySQL (async driver)
@@ -135,7 +135,7 @@ cd infra && make remove-prod
 
 ## Database Architecture
 - **Environment-based Configuration**: Database URL is determined by ENVIRONMENT variable
-- **Connection Pooling**: 
+- **Connection Pooling**:
   - Pool size: Configurable via constants
   - Max overflow: Configurable via constants
   - Pool timeout: Configurable timeout for pool connections

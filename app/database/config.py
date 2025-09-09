@@ -1,8 +1,10 @@
 from os import getenv
+
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from app.database.constant import POOL_SIZE, MAX_OVERFLOW, POOL_RECYCLE
+
 from app.common.enums import EnvironmentType
+from app.database.constant import MAX_OVERFLOW, POOL_RECYCLE, POOL_SIZE
 
 load_dotenv()
 
@@ -20,14 +22,14 @@ def get_database_engine() -> AsyncEngine:
     global engine
     if engine is None:
         database_url = env.db_url
-        
+
         engine = create_async_engine(
             database_url,
             pool_size=POOL_SIZE,
-            max_overflow=MAX_OVERFLOW, 
-            pool_pre_ping=True, 
-            pool_recycle=POOL_RECYCLE, 
-            echo=False,  
+            max_overflow=MAX_OVERFLOW,
+            pool_pre_ping=True,
+            pool_recycle=POOL_RECYCLE,
+            echo=False,
         )
     return engine
 
@@ -41,4 +43,3 @@ def get_async_session_maker() -> async_sessionmaker:
             expire_on_commit=False,
         )
     return async_session_maker
-

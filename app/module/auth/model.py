@@ -1,13 +1,19 @@
+from datetime import date
+
 from sqlmodel import Field, Relationship
 
 from app.common.mixin.timestamp import TimestampMixin
 
 
-class User(TimestampMixin, table=True):
+class User(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "user"
 
     id: int = Field(default=None, primary_key=True)
-    email: str = Field(nullable=False, unique=True)
+    social_id: str = Field(nullable=False, unique=True)
+    nickname: str = Field(nullable=True, unique=True)
+    birthday: date
+    gender: bool
+    phone: str
 
     consent: list["UserConsent"] = Relationship(
         back_populates="user",
@@ -18,7 +24,7 @@ class User(TimestampMixin, table=True):
     )
 
 
-class UserConsent(TimestampMixin, table=True):
+class UserConsent(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "user_consent"
 
     id: int = Field(default=None, primary_key=True)
