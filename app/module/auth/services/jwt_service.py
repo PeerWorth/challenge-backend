@@ -24,12 +24,12 @@ JWT_ALGORITHM: str = _jwt_algorithm
 class JWTService:
     def generate_access_token(self, social_id: str | int) -> str:
         expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_ACCESS_TIME_MINUTE)
-        payload = {"exp": expire, "user": str(social_id), "sub": str(social_id)}
+        payload = {"exp": expire, "sub": str(social_id)}
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
     def generate_refresh_token(self, social_id: str | int) -> str:
         expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_REFRESH_TIME_MINUTE)
-        payload = {"exp": expire, "user": str(social_id), "sub": str(social_id)}
+        payload = {"exp": expire, "sub": str(social_id)}
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
     def decode_token(self, token: str) -> dict:

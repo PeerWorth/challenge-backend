@@ -25,3 +25,4 @@ async def submit_user_email(
     refresh_token = jwt_service.generate_refresh_token(social_id)
 
     return OAuthResponse(access_token=access_token, refresh_token=refresh_token)
+
