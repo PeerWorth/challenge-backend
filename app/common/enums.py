@@ -1,5 +1,6 @@
 from enum import StrEnum
 from os import getenv
+from zoneinfo import ZoneInfo
 
 
 class EnvironmentType(StrEnum):
@@ -29,4 +30,12 @@ class EnvironmentType(StrEnum):
         if not url:
             raise ValueError(f"{key} 환경변수가 설정되지 않았습니다.")
         return url
+
+
+class Timezone(StrEnum):
+    UTC = "UTC"
+    KST = "Asia/Seoul"
+    
+    def get_zone_info(self) -> ZoneInfo:
+        return ZoneInfo(self.value)
 
