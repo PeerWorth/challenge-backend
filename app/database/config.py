@@ -1,6 +1,4 @@
 from os import getenv
-from typing import Optional
-
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from app.database.constant import POOL_SIZE, MAX_OVERFLOW, POOL_RECYCLE

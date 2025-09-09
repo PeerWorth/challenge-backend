@@ -15,7 +15,6 @@ class TimeConverter:
     
     @classmethod
     def convert(cls, dt: datetime, to_tz: Timezone, from_tz: Timezone | None = None) -> datetime:
-
         if dt.tzinfo is None:
             if from_tz is None:
                 dt = dt.replace(tzinfo=timezone.utc)
