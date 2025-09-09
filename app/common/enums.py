@@ -8,7 +8,6 @@ class EnvironmentType(StrEnum):
 
     @property
     def dynamodb_url(self) -> str:
-        """환경별 DynamoDB URL"""
         env_keys = {
             EnvironmentType.DEV: "DEV_DYNAMODB_URL",
             EnvironmentType.PROD: "PROD_DYNAMODB_URL",
@@ -21,7 +20,6 @@ class EnvironmentType(StrEnum):
     
     @property
     def db_url(self) -> str:
-        """환경별 데이터베이스 URL"""
         env_keys = {
             EnvironmentType.DEV: "DEV_MYSQL_URL",
             EnvironmentType.PROD: "PROD_MYSQL_URL",
