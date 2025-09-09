@@ -14,6 +14,13 @@ SageMath
 # Claude
 .claude
 
+### Terraform ###
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+**/*.plan
+
 # Distribution / packaging
 .Python
 build/
