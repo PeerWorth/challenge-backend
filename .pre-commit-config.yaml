@@ -29,12 +29,12 @@ repos:
     hooks:
     -   id: mypy
 
-# -   repo: local
-#     hooks:
-#     -   id: pytest
-#         name: pytest
-#         entry: sh -c 'ENVIRONMENT=test poetry run pytest'
-#         language: system
-#         types: [python]
-#         default_stages: [commit]
-#         require_serial: true
+-   repo: local
+    hooks:
+    -   id: pytest
+        name: pytest
+        entry: sh -c 'ENVIRONMENT=test poetry run pytest'
+        language: system
+        types: [python]
+        default_stages: [commit]
+        require_serial: true
