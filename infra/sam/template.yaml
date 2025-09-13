@@ -41,7 +41,6 @@ Resources:
         Variables:
           # Parameter Store에서 가져오는 일반 설정값
           ENVIRONMENT: !Sub "{{resolve:ssm:/challenge/${Environment}/app/environment}}"
-          AWS_DEFAULT_REGION: !Sub "{{resolve:ssm:/challenge/${Environment}/app/region}}"
           PROJECT_NAME: !Sub "{{resolve:ssm:/challenge/${Environment}/app/project_name}}"
           JWT_ALGORITHM: !Sub "{{resolve:ssm:/challenge/${Environment}/app/jwt_algorithm}}"
 
