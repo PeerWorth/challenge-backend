@@ -19,6 +19,20 @@ Parameters:
     Description: 환경 구분 (dev/prod)
 
 Resources:
+  # Python 의존성 Layer
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub challenge-backend-${Environment}-dependencies
+      Description: Python dependencies for Challenge Backend
+      ContentUri: ../layers/dependencies/
+      CompatibleRuntimes:
+        - python3.12
+      CompatibleArchitectures:
+        - x86_64
+    Metadata:
+      BuildMethod: python3.12
+
   ApiGateway:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -38,6 +52,8 @@ Resources:
       CodeUri: ../../
       Handler: main.handler
       Description: Challenge Backend 애플리케이션
+      Layers:
+        - !Ref DependenciesLayer
       Environment:
         Variables:
           # Parameter Store에서 가져오는 일반 설정값
@@ -77,6 +93,11 @@ Resources:
             ApiId: !Ref ApiGateway
             Path: /
             Method: ANY
+    Metadata:
+      BuildMethod: python3.12
+      BuildProperties:
+        use_container: false
+        skip_dependencies: true
 
 Conditions:
   IsDevEnvironment: !Equals [!Ref Environment, "dev"]
