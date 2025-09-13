@@ -6,6 +6,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.common.schema import ErrorResponse
 from app.module.auth.error import AuthException
+from app.module.user.error import UserException
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -67,7 +68,7 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
     )
 
 
-async def auth_exception_handler(request: Request, exc: AuthException) -> JSONResponse:
+async def custom_exception_handler(request: Request, exc: AuthException | UserException) -> JSONResponse:
     error_response = ErrorResponse(
         code=exc.status_code,
         message=exc.detail,

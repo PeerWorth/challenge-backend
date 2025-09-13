@@ -1,10 +1,10 @@
 from datetime import date
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.generic_repository import GenericRepository
 from app.model.user import User
+from app.module.user.error import UserNotFoundException
 
 
 class UserService:
@@ -17,7 +17,7 @@ class UserService:
         user = await self.user_repository.find_by_field(session, "social_id", social_id)
 
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="사용자를 찾을 수 없습니다.")
+            raise UserNotFoundException()
 
         updated_user = await self.user_repository.update_instance(
             session=session, instance=user, nickname=nickname, birthday=birthday, gender=gender, phone=phone

@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.auth.v1.router import auth_router
 from app.api.user.v1.router import user_router
 from app.common.exception_handlers import (
-    auth_exception_handler,
+    custom_exception_handler,
     general_exception_handler,
     http_exception_handler,
     pydantic_validation_exception_handler,
@@ -15,10 +15,12 @@ from app.common.exception_handlers import (
     validation_exception_handler,
 )
 from app.module.auth.error import AuthException
+from app.module.user.error import UserException
 
 app = FastAPI()
 
-app.add_exception_handler(AuthException, auth_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(AuthException, custom_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(UserException, custom_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]

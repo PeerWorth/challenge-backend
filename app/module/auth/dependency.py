@@ -6,7 +6,7 @@ from app.module.auth.services.jwt_service import JWTService
 security = HTTPBearer()
 
 
-async def get_current_user_social_id(
+async def verify_access_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     jwt_service: JWTService = Depends(),
 ) -> str:

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.user.v1.schema import ProfileRequest, ProfileResponse
 from app.database.dependency import get_db_session
-from app.module.auth.dependency import get_current_user_social_id
+from app.module.auth.dependency import verify_access_token
 from app.module.user.user_service import UserService
 
 user_router = APIRouter(prefix="/v1")
@@ -20,7 +20,7 @@ async def submit_user_profile(
     request_data: ProfileRequest,
     session: AsyncSession = Depends(get_db_session),
     user_service: UserService = Depends(),
-    current_user_social_id: str = Depends(get_current_user_social_id),
+    current_user_social_id: str = Depends(verify_access_token),
 ):
     await user_service.update_user_profile(
         session=session,

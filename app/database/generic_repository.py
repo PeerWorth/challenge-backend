@@ -25,7 +25,7 @@ class GenericRepository:
 
     async def find_by_field(self, session: AsyncSession, field_name: str, field_value: Any):
         if not hasattr(self.model, field_name):
-            raise ValueError(f"Model {self.model.__name__} does not have field '{field_name}'")
+            raise ValueError(f"모델 {self.model.__name__}에서 필드 '{field_name}'를 찾을 수 없습니다.")
 
         field = getattr(self.model, field_name)
         query = select(self.model).where(field == field_value)
