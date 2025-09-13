@@ -4,8 +4,8 @@ from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.generic_repository import GenericRepository
+from app.model.user import User
 from app.module.auth.error import InvalidKakaoTokenException, MissingSocialIDException
-from app.module.auth.model import User
 
 load_dotenv()
 

@@ -1,15 +1,17 @@
 from datetime import date
 
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, UniqueConstraint
 
 from app.common.mixin.timestamp import TimestampMixin
 
 
 class User(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "user"
+    __table_args__ = (UniqueConstraint("provider", "social_id"),)
 
     id: int = Field(default=None, primary_key=True)
-    social_id: str = Field(nullable=False, unique=True)
+    provider: str = Field(nullable=False)
+    social_id: str = Field(nullable=False)
     nickname: str = Field(nullable=True, unique=True)
     birthday: date
     gender: bool

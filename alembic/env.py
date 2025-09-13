@@ -12,7 +12,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from sqlmodel import SQLModel
 
 from app.common.enums import EnvironmentType
-from app.module.auth.model import User, UserConsent  # noqa: F401
+from app.model.user import User, UserConsent  # noqa: F401
 
 config = context.config
 
