@@ -37,6 +37,13 @@ repos:
 
 -   repo: local
     hooks:
+    -   id: update-requirements
+        name: Update requirements.txt
+        entry: sh -c 'uv export --format requirements-txt > requirements.txt && git add requirements.txt'
+        language: system
+        files: '^pyproject\.toml$|^uv\.lock$'
+        pass_filenames: false
+        default_stages: [commit]
     -   id: pytest
         name: pytest
         entry: sh -c 'ENVIRONMENT=test uv run pytest'
