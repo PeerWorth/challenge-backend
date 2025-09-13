@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.generic_repository import GenericRepository
 from app.model.user import User
+from app.module.auth.enums import OAuthProvider
 from app.module.auth.error import InvalidKakaoTokenException, MissingSocialIDException
 
 load_dotenv()
@@ -18,13 +19,19 @@ class AuthService:
 
     async def find_or_create_user(self, session: AsyncSession, social_id: str) -> bool:
 
-        existing_user = await self.user_repository.find_one(session, social_id=social_id)
+        existing_user = await self.user_repository.find_one(session, provider=OAuthProvider.KAKAO, social_id=social_id)
 
         if existing_user:
             return False
 
         await self.user_repository.create(
-            session, social_id=social_id, nickname=None, birthday=None, gender=None, phone=None
+            session,
+            provider=OAuthProvider.KAKAO,
+            social_id=social_id,
+            nickname=None,
+            birthday=None,
+            gender=None,
+            phone=None,
         )
 
         return True
