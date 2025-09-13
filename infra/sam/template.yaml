@@ -39,7 +39,31 @@ Resources:
       Description: Challenge Backend 애플리케이션
       Environment:
         Variables:
-          ENVIRONMENT: !Ref Environment
+          # Parameter Store에서 가져오는 일반 설정값
+          ENVIRONMENT: !Sub "{{resolve:ssm:/challenge/${Environment}/app/environment}}"
+          AWS_DEFAULT_REGION: !Sub "{{resolve:ssm:/challenge/${Environment}/app/region}}"
+          PROJECT_NAME: !Sub "{{resolve:ssm:/challenge/${Environment}/app/project_name}}"
+          JWT_ALGORITHM: !Sub "{{resolve:ssm:/challenge/${Environment}/app/jwt_algorithm}}"
+
+          # Database 연결 정보 (비민감 정보는 Parameter Store)
+          DB_HOST: !Sub "{{resolve:ssm:/challenge/${Environment}/db/host}}"
+          DB_PORT: !Sub "{{resolve:ssm:/challenge/${Environment}/db/port}}"
+          DB_NAME: !Sub "{{resolve:ssm:/challenge/${Environment}/db/database}}"
+          DB_USER: !Sub "{{resolve:ssm:/challenge/${Environment}/db/username}}"
+
+          # Secrets Manager에서 가져오는 민감 정보
+          JWT_SECRET: !Sub "{{resolve:secretsmanager:challenge-${Environment}-jwt:SecretString:JWT_SECRET}}"
+          DB_PASSWORD: !Sub "{{resolve:secretsmanager:challenge-${Environment}-db:SecretString:password}}"
+
+          # 환경별 MySQL URL (완성된 연결 문자열)
+          DEV_MYSQL_URL: !If
+            - IsDevEnvironment
+            - !Sub "{{resolve:secretsmanager:challenge-${Environment}-db:SecretString:mysql_url}}"
+            - !Ref "AWS::NoValue"
+          PROD_MYSQL_URL: !If
+            - IsProdEnvironment
+            - !Sub "{{resolve:secretsmanager:challenge-${Environment}-db:SecretString:mysql_url}}"
+            - !Ref "AWS::NoValue"
       Events:
         ApiEvent:
           Type: HttpApi
@@ -53,6 +77,10 @@ Resources:
             ApiId: !Ref ApiGateway
             Path: /
             Method: ANY
+
+Conditions:
+  IsDevEnvironment: !Equals [!Ref Environment, "dev"]
+  IsProdEnvironment: !Equals [!Ref Environment, "prod"]
 
 Outputs:
   ApiUrl:
