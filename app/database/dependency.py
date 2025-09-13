@@ -1,28 +1,18 @@
-from os import getenv
 from typing import AsyncGenerator
 
-from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.enums import EnvironmentType
-from database.config import mysql_session_factory
-
-load_dotenv()
-
-ENVIRONMENT = getenv("ENVIRONMENT", None)
-if not ENVIRONMENT:
-    raise ValueError("ENVIRONMENT 환경변수가 설정되지 않았습니다.")
-try:
-    env = EnvironmentType(ENVIRONMENT)  # type: ignore[arg-type]
-except ValueError:
-    raise ValueError(f"정의되지 않는 환경 변수 값입니다. {ENVIRONMENT=}")
+from app.database.config import get_async_session_maker
 
 
-
-async def get_mysql_session_router() -> AsyncGenerator[AsyncSession, None]:
-    session = mysql_session_factory()
-    try:
-        yield session
-    finally:
-        await session.close()
-
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    session_maker = get_async_session_maker()
+    async with session_maker() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
