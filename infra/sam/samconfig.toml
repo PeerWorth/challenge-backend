@@ -1,0 +1,35 @@
+version = 0.1
+
+# 개발 환경
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "challenge-backend-dev"
+s3_prefix = "challenge-backend-dev"
+region = "ap-northeast-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+resolve_s3 = true
+
+[dev.build]
+[dev.build.parameters]
+cached = true
+parallel = true
+
+# 프로덕션 환경
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "challenge-backend-prod"
+s3_prefix = "challenge-backend-prod"
+region = "ap-northeast-2"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod"
+resolve_s3 = true
+
+[prod.build]
+[prod.build.parameters]
+cached = true
+parallel = true
