@@ -30,5 +30,5 @@ class ErrorDetail(CamelBaseModel):
 class ErrorResponse(CamelBaseModel):
     code: int = Field(default=..., description="HTTP 상태 코드", examples=[403])
     message: str = Field(default=..., description="에러 메시지", examples=["유효하지 않은 요청입니다."])
-    error: ErrorDetail
+    error: str = Field(default=..., description="에러 타입", examples=["InvalidKakaoTokenException"])
     success: bool = Field(default=False, description="성공 여부", examples=[False])

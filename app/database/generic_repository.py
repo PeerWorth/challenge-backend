@@ -23,6 +23,15 @@ class GenericRepository:
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
+    async def find_by_field(self, session: AsyncSession, field_name: str, field_value: Any):
+        if not hasattr(self.model, field_name):
+            raise ValueError(f"모델 {self.model.__name__}에서 필드 '{field_name}'를 찾을 수 없습니다.")
+
+        field = getattr(self.model, field_name)
+        query = select(self.model).where(field == field_value)
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
+
     async def find_all(self, session: AsyncSession, **filters) -> List:
         query = select(self.model).filter_by(**filters)
         result = await session.execute(query)
@@ -38,6 +47,16 @@ class GenericRepository:
                 setattr(instance, key, value)
 
         await session.flush()
+        return instance
+
+    async def update_instance(self, session: AsyncSession, instance, **update_data):
+        for key, value in update_data.items():
+            if hasattr(instance, key):
+                setattr(instance, key, value)
+
+        session.add(instance)
+        await session.commit()
+        await session.refresh(instance)
         return instance
 
     async def delete(self, session: AsyncSession, id: Any) -> bool:

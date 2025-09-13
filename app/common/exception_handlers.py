@@ -4,14 +4,16 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.common.schema import ErrorDetail, ErrorResponse
+from app.common.schema import ErrorResponse
+from app.module.auth.error import AuthException
+from app.module.user.error import UserException
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     error_response = ErrorResponse(
         code=exc.status_code,
         message=exc.detail if isinstance(exc.detail, str) else "에러가 발생했습니다.",
-        error=ErrorDetail(type="HTTPException", details=exc.detail if isinstance(exc.detail, dict) else None),
+        error="HTTPException",
         success=False,
     )
 
@@ -22,7 +24,7 @@ async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPE
     error_response = ErrorResponse(
         code=exc.status_code,
         message=exc.detail if isinstance(exc.detail, str) else "에러가 발생했습니다.",
-        error=ErrorDetail(type="HTTPException", details=exc.detail if isinstance(exc.detail, dict) else None),
+        error="HTTPException",
         success=False,
     )
 
@@ -39,9 +41,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     error_response = ErrorResponse(
         code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         message="입력값 검증에 실패했습니다.",
-        error=ErrorDetail(
-            type="ValidationError", details=errors_dict if errors_dict else {"general": "입력값을 확인해주세요."}
-        ),
+        error="ValidationError",
         success=False,
     )
 
@@ -59,7 +59,7 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
     error_response = ErrorResponse(
         code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         message="데이터 검증에 실패했습니다.",
-        error=ErrorDetail(type="ValidationError", details=errors_dict),
+        error="ValidationError",
         success=False,
     )
 
@@ -68,11 +68,22 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
     )
 
 
+async def custom_exception_handler(request: Request, exc: AuthException | UserException) -> JSONResponse:
+    error_response = ErrorResponse(
+        code=exc.status_code,
+        message=exc.detail,
+        error=exc.__class__.__name__,
+        success=False,
+    )
+
+    return JSONResponse(status_code=exc.status_code, content=error_response.model_dump(by_alias=True))
+
+
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     error_response = ErrorResponse(
         code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         message="서버 내부 오류가 발생했습니다.",
-        error=ErrorDetail(type="InternalServerError", details=None),
+        error="InternalServerError",
         success=False,
     )
 
