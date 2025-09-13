@@ -37,7 +37,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
     password = var.db_password
-    mysql_url = "mysql+aiomysql://${aws_db_instance.mysql.username}:${var.db_password}@${aws_db_instance.mysql.endpoint}:${aws_db_instance.mysql.port}/${aws_db_instance.mysql.db_name}"
+    mysql_url = "mysql+aiomysql://${aws_db_instance.mysql.username}:${var.db_password}@${aws_db_instance.mysql.endpoint}/${aws_db_instance.mysql.db_name}"
   })
 }
 
