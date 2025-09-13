@@ -55,3 +55,15 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "jwt_secret" {
+  description = "JWT 시크릿 키"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_algorithm" {
+  description = "JWT 알고리즘"
+  type        = string
+  default     = "HS256"
+}

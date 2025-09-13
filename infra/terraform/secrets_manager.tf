@@ -24,6 +24,14 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   }
 }
 
+# JWT 시크릿 초기값 설정
+resource "aws_secretsmanager_secret_version" "jwt_secrets" {
+  secret_id = aws_secretsmanager_secret.jwt_secrets.id
+  secret_string = jsonencode({
+    JWT_SECRET = var.jwt_secret
+  })
+}
+
 # DB 시크릿 초기값 설정 (비밀번호 포함)
 resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
