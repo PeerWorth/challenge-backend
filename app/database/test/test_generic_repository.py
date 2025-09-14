@@ -35,10 +35,30 @@ class TestGenericRepository:
 
     # ===== upsert 메서드 테스트 =====
     @pytest.mark.asyncio
-    async def test_upsert_success(
+    async def test_upsert_success_without_return_instance(
+        self, user_consent_repository, mock_session, sample_consent_data
+    ):
+        """upsert 메서드가 return_instance=False일 때 정상 동작하는지 테스트"""
+        # Given
+        conflict_keys = ["user_id", "event"]
+        mock_session.execute = AsyncMock()
+        mock_session.flush = AsyncMock()
+
+        # When
+        result = await user_consent_repository.upsert(
+            session=mock_session, conflict_keys=conflict_keys, return_instance=False, **sample_consent_data
+        )
+
+        # Then
+        assert result is None
+        mock_session.execute.assert_called_once()
+        mock_session.flush.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_upsert_success_with_return_instance(
         self, user_consent_repository, mock_session, sample_consent_data, sample_consent_instance
     ):
-        """upsert 메서드가 정상적으로 동작하는지 테스트"""
+        """upsert 메서드가 return_instance=True일 때 인스턴스를 반환하는지 테스트"""
         # Given
         conflict_keys = ["user_id", "event"]
         mock_session.execute = AsyncMock()
@@ -47,7 +67,7 @@ class TestGenericRepository:
 
         # When
         result = await user_consent_repository.upsert(
-            session=mock_session, conflict_keys=conflict_keys, **sample_consent_data
+            session=mock_session, conflict_keys=conflict_keys, return_instance=True, **sample_consent_data
         )
 
         # Then
@@ -89,10 +109,12 @@ class TestGenericRepository:
         user_consent_repository.find_one = AsyncMock(return_value=sample_consent_instance)
 
         # When
-        result = await user_consent_repository.upsert(session=mock_session, conflict_keys=conflict_keys, **data)
+        result = await user_consent_repository.upsert(
+            session=mock_session, conflict_keys=conflict_keys, return_instance=False, **data
+        )
 
         # Then
-        assert result == sample_consent_instance
+        assert result is None  # return_instance=False이므로 None
         mock_session.execute.assert_called_once()
         mock_session.flush.assert_called_once()
 
@@ -107,7 +129,7 @@ class TestGenericRepository:
 
         # When
         result = await user_consent_repository.upsert(
-            session=mock_session, conflict_keys=conflict_keys, **sample_consent_data
+            session=mock_session, conflict_keys=conflict_keys, return_instance=True, **sample_consent_data
         )
 
         # Then
@@ -164,7 +186,7 @@ class TestGenericRepository:
         # When & Then
         with pytest.raises(Exception) as exc_info:
             await user_consent_repository.upsert(
-                session=mock_session, conflict_keys=conflict_keys, **sample_consent_data
+                session=mock_session, conflict_keys=conflict_keys, return_instance=True, **sample_consent_data
             )
 
         assert str(exc_info.value) == "Find failed"

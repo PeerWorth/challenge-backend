@@ -20,11 +20,11 @@ class UserService:
         user_id: int,
         event: str,
         agree: bool,
-    ) -> Any:
-        """사용자 동의 정보를 upsert로 처리 (1번의 쿼리로 처리)"""
-        return await self.user_consent_repository.upsert(
+    ) -> None:
+        await self.user_consent_repository.upsert(
             session=session,
             conflict_keys=["user_id", "event"],
+            return_instance=False,
             user_id=user_id,
             event=event,
             agree=agree,

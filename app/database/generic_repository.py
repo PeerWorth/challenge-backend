@@ -58,7 +58,7 @@ class GenericRepository:
                 setattr(instance, key, value)
 
         session.add(instance)
-        await session.commit()
+        await session.flush()  # commit 대신 flush 사용
         await session.refresh(instance)
         return instance
 
@@ -71,7 +71,9 @@ class GenericRepository:
         await session.flush()
         return True
 
-    async def upsert(self, session: AsyncSession, conflict_keys: List[str], **data: Any) -> Optional[Any]:
+    async def upsert(
+        self, session: AsyncSession, conflict_keys: List[str], return_instance: bool = False, **data: Any
+    ) -> Optional[Any]:
         stmt = insert(self.model).values(**data)
 
         update_dict = {key: value for key, value in data.items() if key not in conflict_keys}
@@ -81,5 +83,8 @@ class GenericRepository:
         await session.execute(stmt)
         await session.flush()
 
-        filters = {key: data[key] for key in conflict_keys}
-        return await self.find_one(session, **filters)
+        if return_instance:
+            filters = {key: data[key] for key in conflict_keys}
+            return await self.find_one(session, **filters)
+
+        return None

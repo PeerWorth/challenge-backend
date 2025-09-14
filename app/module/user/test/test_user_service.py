@@ -129,12 +129,12 @@ class TestUserService:
             )
 
     @pytest.mark.asyncio
-    async def test_upsert_user_consent_success(self, user_service: UserService, mock_session, user_consent):
+    async def test_upsert_user_consent_success(self, user_service: UserService, mock_session, user_consent) -> None:
         # Given
-        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
 
         # When
-        result = await user_service.upsert_user_consent(
+        await user_service.upsert_user_consent(
             session=mock_session,
             user_id=1,
             event=AgreeTypes.MARKETING.value,
@@ -142,10 +142,10 @@ class TestUserService:
         )
 
         # Then
-        assert result == user_consent
         user_service.user_consent_repository.upsert.assert_called_once_with(
             session=mock_session,
             conflict_keys=["user_id", "event"],
+            return_instance=False,  # 최적화 파라미터 추가
             user_id=1,
             event=AgreeTypes.MARKETING.value,
             agree=True,
@@ -158,7 +158,7 @@ class TestUserService:
         # Given
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
-        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
 
         # When
         result = await user_service.register_user_profile(
@@ -186,6 +186,7 @@ class TestUserService:
         assert calls[0][1] == {
             "session": mock_session,
             "conflict_keys": ["user_id", "event"],
+            "return_instance": False,  # 추가
             "user_id": 1,
             "event": AgreeTypes.PERSONAL_INFO.value,
             "agree": True,
@@ -195,6 +196,7 @@ class TestUserService:
         assert calls[1][1] == {
             "session": mock_session,
             "conflict_keys": ["user_id", "event"],
+            "return_instance": False,  # 추가
             "user_id": 1,
             "event": AgreeTypes.TERM_OF_USE.value,
             "agree": True,
@@ -204,6 +206,7 @@ class TestUserService:
         assert calls[2][1] == {
             "session": mock_session,
             "conflict_keys": ["user_id", "event"],
+            "return_instance": False,  # 추가
             "user_id": 1,
             "event": AgreeTypes.MARKETING.value,
             "agree": True,
@@ -220,7 +223,7 @@ class TestUserService:
 
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
-        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
 
         # When
         result = await user_service.register_user_profile(
@@ -289,7 +292,7 @@ class TestUserService:
 
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
-        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
 
         # When
         result = await user_service.register_user_profile(
