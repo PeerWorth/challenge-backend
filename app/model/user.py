@@ -28,6 +28,7 @@ class User(TimestampMixin, table=True):  # type: ignore
 
 class UserConsent(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "user_consent"
+    __table_args__ = (UniqueConstraint("user_id", "event"),)
 
     id: int = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", nullable=False)

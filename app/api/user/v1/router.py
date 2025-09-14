@@ -22,13 +22,10 @@ async def submit_user_profile(
     user_service: UserService = Depends(),
     current_user_social_id: str = Depends(verify_access_token),
 ):
-    await user_service.update_user_profile(
+    await user_service.register_user_profile(
         session=session,
         social_id=current_user_social_id,
-        nickname=request_data.nickname,
-        birthday=request_data.birthday,
-        gender=request_data.gender,
-        phone=request_data.phone,
+        request_data=request_data,
     )
 
     return ProfileResponse(success=True)
