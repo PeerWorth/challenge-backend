@@ -26,6 +26,5 @@ async def submit_user_email(
     is_new_user = await auth_service.find_or_create_user(session, social_id)
 
     access_token = jwt_service.generate_access_token(social_id)
-    refresh_token = jwt_service.generate_refresh_token(social_id)
 
-    return OAuthResponse(access_token=access_token, refresh_token=refresh_token, is_new_user=is_new_user)
+    return OAuthResponse(access_token=access_token, is_new_user=is_new_user)
