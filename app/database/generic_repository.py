@@ -1,12 +1,15 @@
-from typing import Any, List, Type
+from typing import Any, List, Optional, Type, TypeVar
 
 from sqlalchemy import select
+from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeMeta
 
+T = TypeVar("T", bound=DeclarativeMeta)
+
 
 class GenericRepository:
-    def __init__(self, model: Type[DeclarativeMeta]):
+    def __init__(self, model: Type[T]):
         self.model = model
 
     async def create(self, session: AsyncSession, **kwargs):
@@ -67,3 +70,16 @@ class GenericRepository:
         await session.delete(instance)
         await session.flush()
         return True
+
+    async def upsert(self, session: AsyncSession, conflict_keys: List[str], **data: Any) -> Optional[Any]:
+        stmt = insert(self.model).values(**data)
+
+        update_dict = {key: value for key, value in data.items() if key not in conflict_keys}
+        if update_dict:
+            stmt = stmt.on_duplicate_key_update(**update_dict)
+
+        await session.execute(stmt)
+        await session.flush()
+
+        filters = {key: data[key] for key in conflict_keys}
+        return await self.find_one(session, **filters)
