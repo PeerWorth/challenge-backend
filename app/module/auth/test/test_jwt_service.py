@@ -6,7 +6,7 @@ import pytest
 from fastapi import HTTPException, status
 
 import app.module.auth.services.jwt_service as jwt_module
-from app.module.auth.constant import JWT_ACCESS_TIME_MINUTE, JWT_REFRESH_TIME_MINUTE
+from app.module.auth.constant import JWT_ACCESS_TIME_MINUTE
 from app.module.auth.services.jwt_service import JWTService
 
 
@@ -56,40 +56,6 @@ class TestJWTService:
             # Then
             decoded = jwt.decode(token, "test_secret_key", algorithms=["HS256"], options={"verify_exp": False})
             assert decoded["sub"] == "123456"
-
-    def test_generate_refresh_token_with_string_id(self, jwt_service: JWTService, mock_current_time):
-        # Given
-        social_id = "user_789012"
-
-        with patch("app.module.auth.services.jwt_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = mock_current_time
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
-
-            # When
-            token = jwt_service.generate_refresh_token(social_id)
-
-            # Then
-            decoded = jwt.decode(token, "test_secret_key", algorithms=["HS256"], options={"verify_exp": False})
-            assert decoded["sub"] == "user_789012"
-
-            # 만료 시간 검증 (7일)
-            expected_exp = mock_current_time + timedelta(minutes=JWT_REFRESH_TIME_MINUTE)
-            assert decoded["exp"] == int(expected_exp.timestamp())
-
-    def test_generate_refresh_token_with_int_id(self, jwt_service: JWTService, mock_current_time):
-        # Given
-        social_id = 789012
-
-        with patch("app.module.auth.services.jwt_service.datetime") as mock_datetime:
-            mock_datetime.now.return_value = mock_current_time
-            mock_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
-
-            # When
-            token = jwt_service.generate_refresh_token(social_id)
-
-            # Then
-            decoded = jwt.decode(token, "test_secret_key", algorithms=["HS256"], options={"verify_exp": False})
-            assert decoded["sub"] == "789012"
 
     def test_decode_valid_token(self, jwt_service: JWTService):
         # Given
@@ -160,40 +126,3 @@ class TestJWTService:
 
         assert decoded1["sub"] == "user_001"
         assert decoded2["sub"] == "user_002"
-
-    def test_access_and_refresh_tokens_are_different(self, jwt_service: JWTService):
-        # Given
-        social_id = "test_user"
-
-        # When
-        access_token = jwt_service.generate_access_token(social_id)
-        refresh_token = jwt_service.generate_refresh_token(social_id)
-
-        # Then
-        assert access_token != refresh_token
-
-        access_decoded = jwt.decode(access_token, "test_secret_key", algorithms=["HS256"])
-        refresh_decoded = jwt.decode(refresh_token, "test_secret_key", algorithms=["HS256"])
-
-        assert access_decoded["sub"] == refresh_decoded["sub"]
-        assert access_decoded["exp"] != refresh_decoded["exp"]
-
-    def test_token_independence(self, jwt_service: JWTService):
-        # Given
-        user1 = "user_1"
-        user2 = "user_2"
-
-        # When - 여러 토큰 생성
-        token1_access = jwt_service.generate_access_token(user1)
-        token1_refresh = jwt_service.generate_refresh_token(user1)
-        token2_access = jwt_service.generate_access_token(user2)
-        token2_refresh = jwt_service.generate_refresh_token(user2)
-
-        # Then - 모든 토큰이 서로 다름
-        tokens = [token1_access, token1_refresh, token2_access, token2_refresh]
-        assert len(set(tokens)) == 4
-
-        assert jwt_service.decode_token(token1_access)["sub"] == "user_1"
-        assert jwt_service.decode_token(token1_refresh)["sub"] == "user_1"
-        assert jwt_service.decode_token(token2_access)["sub"] == "user_2"
-        assert jwt_service.decode_token(token2_refresh)["sub"] == "user_2"
