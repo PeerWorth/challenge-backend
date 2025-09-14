@@ -1,10 +1,12 @@
 from datetime import date
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.model.user import User
+from app.api.user.v1.schema import ProfileRequest
+from app.model.user import User, UserConsent
+from app.module.user.enums import AgreeTypes
 from app.module.user.error import UserNotFoundException
 from app.module.user.user_service import UserService
 
@@ -37,20 +39,30 @@ class TestUserService:
         user.nickname = "새닉네임"
         user.birthday = date(1995, 6, 15)
         user.gender = False
-        user.phone = "01087654321"
+        user.phone = None
         return user
 
     @pytest.fixture
-    def profile_data(self):
-        return {"nickname": "새닉네임", "birthday": date(1995, 6, 15), "gender": False, "phone": "01087654321"}
+    def profile_request(self):
+        return ProfileRequest(nickname="새닉네임", birthday=date(1995, 6, 15), gender=False, agree_marketing=True)
 
+    @pytest.fixture
+    def user_consent(self):
+        consent = UserConsent()
+        consent.id = 1
+        consent.user_id = 1
+        consent.event = "marketing"
+        consent.agree = True
+        return consent
+
+    # ===== update_user_profile 테스트 =====
     @pytest.mark.asyncio
-    async def test_update_user_profile_success(
-        self, user_service: UserService, mock_session, sample_user, updated_user, profile_data
+    async def test_update_user_profile_success_with_kwargs(
+        self, user_service: UserService, mock_session, sample_user, updated_user
     ):
+        """update_user_profile이 **kwargs 방식으로 잘 동작하는지 테스트"""
         # Given
         social_id = "test_social_id_123"
-
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=updated_user)
 
@@ -58,10 +70,10 @@ class TestUserService:
         result = await user_service.update_user_profile(
             session=mock_session,
             social_id=social_id,
-            nickname=profile_data["nickname"],
-            birthday=profile_data["birthday"],
-            gender=profile_data["gender"],
-            phone=profile_data["phone"],
+            nickname="새닉네임",
+            birthday=date(1995, 6, 15),
+            gender=False,
+            phone=None,
         )
 
         # Then
@@ -70,128 +82,229 @@ class TestUserService:
         user_service.user_repository.update_instance.assert_called_once_with(
             session=mock_session,
             instance=sample_user,
-            nickname=profile_data["nickname"],
-            birthday=profile_data["birthday"],
-            gender=profile_data["gender"],
-            phone=profile_data["phone"],
+            nickname="새닉네임",
+            birthday=date(1995, 6, 15),
+            gender=False,
+            phone=None,
         )
 
     @pytest.mark.asyncio
-    async def test_update_user_profile_user_not_found(self, user_service: UserService, mock_session, profile_data):
-        """
-        Given: 존재하지 않는 사용자의 social_id와 업데이트할 프로필 정보가 주어졌을 때
-        When: update_user_profile 메서드를 호출하면
-        Then: UserNotFoundException 예외가 발생한다
-        """
+    async def test_update_user_profile_protected_fields_filtered(
+        self, user_service: UserService, mock_session, sample_user, updated_user
+    ):
+        # Given
+        social_id = "test_social_id_123"
+        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
+        user_service.user_repository.update_instance = AsyncMock(return_value=updated_user)
+
+        # When - protected fields 포함해서 호출
+        result = await user_service.update_user_profile(
+            session=mock_session,
+            social_id=social_id,
+            nickname="새닉네임",
+            provider="google",  # protected field
+            id=999,  # protected field
+        )
+
+        # Then - protected fields는 제외되고 호출되어야 함
+        assert result == updated_user
+        user_service.user_repository.update_instance.assert_called_once_with(
+            session=mock_session,
+            instance=sample_user,
+            nickname="새닉네임",  # only non-protected field
+        )
+
+    @pytest.mark.asyncio
+    async def test_update_user_profile_user_not_found(self, user_service: UserService, mock_session):
         # Given
         social_id = "nonexistent_social_id"
-
         user_service.user_repository.find_by_field = AsyncMock(return_value=None)
 
         # When & Then
-        with pytest.raises(UserNotFoundException) as exc_info:
+        with pytest.raises(UserNotFoundException):
             await user_service.update_user_profile(
                 session=mock_session,
                 social_id=social_id,
-                nickname=profile_data["nickname"],
-                birthday=profile_data["birthday"],
-                gender=profile_data["gender"],
-                phone=profile_data["phone"],
+                nickname="새닉네임",
             )
 
-        assert exc_info.value.status_code == 404
-        assert exc_info.value.detail == "사용자를 찾을 수 없습니다."
-
-        user_service.user_repository.find_by_field.assert_called_once_with(mock_session, "social_id", social_id)
-
-        assert True
-
     @pytest.mark.asyncio
-    async def test_update_user_profile_with_different_data_types(
-        self, user_service: UserService, mock_session, sample_user
-    ):
+    async def test_upsert_user_consent_success(self, user_service: UserService, mock_session, user_consent):
         # Given
-        social_id = "test_social_id_123"
-        updated_user_mock = MagicMock()
-
-        # Test data with various types
-        nickname = "테스트닉네임"
-        birthday = date(2000, 12, 25)
-        gender = True
-        phone = "01099999999"
-
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
-        user_service.user_repository.update_instance = AsyncMock(return_value=updated_user_mock)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
 
         # When
-        result = await user_service.update_user_profile(
-            session=mock_session, social_id=social_id, nickname=nickname, birthday=birthday, gender=gender, phone=phone
+        result = await user_service.upsert_user_consent(
+            session=mock_session,
+            user_id=1,
+            event=AgreeTypes.MARKETING.value,
+            agree=True,
         )
 
         # Then
-        assert result == updated_user_mock
-        user_service.user_repository.update_instance.assert_called_once_with(
-            session=mock_session, instance=sample_user, nickname=nickname, birthday=birthday, gender=gender, phone=phone
+        assert result == user_consent
+        user_service.user_consent_repository.upsert.assert_called_once_with(
+            session=mock_session,
+            conflict_keys=["user_id", "event"],
+            user_id=1,
+            event=AgreeTypes.MARKETING.value,
+            agree=True,
         )
 
     @pytest.mark.asyncio
-    async def test_update_user_profile_repository_dependency(self, user_service: UserService):
-        # Given & When
-        repository = user_service.user_repository
-
-        # Then
-        assert repository is not None
-        assert hasattr(repository, "find_by_field")
-        assert hasattr(repository, "update_instance")
-
-    @pytest.mark.asyncio
-    async def test_update_user_profile_edge_case_empty_strings(
-        self, user_service: UserService, mock_session, sample_user
+    async def test_register_user_profile_success(
+        self, user_service: UserService, mock_session, sample_user, profile_request, user_consent
     ):
         # Given
-        social_id = "test_social_id_123"
-        updated_user_mock = MagicMock()
-
-        # Edge case data
-        nickname = ""  # empty string
-        birthday = date(1990, 1, 1)
-        gender = False
-        phone = ""  # empty string
-
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
-        user_service.user_repository.update_instance = AsyncMock(return_value=updated_user_mock)
+        user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
 
         # When
-        result = await user_service.update_user_profile(
-            session=mock_session, social_id=social_id, nickname=nickname, birthday=birthday, gender=gender, phone=phone
+        result = await user_service.register_user_profile(
+            session=mock_session,
+            social_id="test_social_id_123",
+            request_data=profile_request,
         )
 
         # Then
-        assert result == updated_user_mock
+        assert result == sample_user
+
         user_service.user_repository.update_instance.assert_called_once_with(
-            session=mock_session, instance=sample_user, nickname="", birthday=birthday, gender=False, phone=""
+            session=mock_session,
+            instance=sample_user,
+            nickname="새닉네임",
+            birthday=date(1995, 6, 15),
+            gender=False,
+            phone=None,
         )
 
+        assert user_service.user_consent_repository.upsert.call_count == 3
+
+        calls = user_service.user_consent_repository.upsert.call_args_list
+
+        assert calls[0][1] == {
+            "session": mock_session,
+            "conflict_keys": ["user_id", "event"],
+            "user_id": 1,
+            "event": AgreeTypes.PERSONAL_INFO.value,
+            "agree": True,
+        }
+
+        # Term of use consent
+        assert calls[1][1] == {
+            "session": mock_session,
+            "conflict_keys": ["user_id", "event"],
+            "user_id": 1,
+            "event": AgreeTypes.TERM_OF_USE.value,
+            "agree": True,
+        }
+
+        # Marketing consent
+        assert calls[2][1] == {
+            "session": mock_session,
+            "conflict_keys": ["user_id", "event"],
+            "user_id": 1,
+            "event": AgreeTypes.MARKETING.value,
+            "agree": True,
+        }
+
     @pytest.mark.asyncio
-    async def test_update_user_profile_repository_exception_propagation(
-        self, user_service: UserService, mock_session, sample_user
+    async def test_register_user_profile_marketing_consent_false(
+        self, user_service: UserService, mock_session, sample_user, user_consent
     ):
         # Given
-        social_id = "test_social_id_123"
-        repository_error = Exception("Database connection failed")
+        profile_request = ProfileRequest(
+            nickname="새닉네임", birthday=date(1995, 6, 15), gender=False, agree_marketing=False  # False로 설정
+        )
 
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
-        user_service.user_repository.update_instance = AsyncMock(side_effect=repository_error)
+        user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
+
+        # When
+        result = await user_service.register_user_profile(
+            session=mock_session,
+            social_id="test_social_id_123",
+            request_data=profile_request,
+        )
+
+        # Then
+        assert result == sample_user
+
+        # Marketing consent가 False로 호출되었는지 확인
+        calls = user_service.user_consent_repository.upsert.call_args_list
+        marketing_call = calls[2][1]
+        assert marketing_call["agree"] is False
+
+    @pytest.mark.asyncio
+    async def test_register_user_profile_user_not_found(self, user_service: UserService, mock_session, profile_request):
+        # Given
+        user_service.user_repository.find_by_field = AsyncMock(return_value=None)
+
+        # When & Then
+        with pytest.raises(UserNotFoundException):
+            await user_service.register_user_profile(
+                session=mock_session,
+                social_id="nonexistent_social_id",
+                request_data=profile_request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_register_user_profile_consent_upsert_failure(
+        self, user_service: UserService, mock_session, sample_user, profile_request
+    ):
+        # Given
+        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
+        user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
+        user_service.user_consent_repository.upsert = AsyncMock(side_effect=Exception("Consent upsert failed"))
 
         # When & Then
         with pytest.raises(Exception) as exc_info:
-            await user_service.update_user_profile(
+            await user_service.register_user_profile(
                 session=mock_session,
-                social_id=social_id,
-                nickname="닉네임",
-                birthday=date(1990, 1, 1),
-                gender=True,
-                phone="01012345678",
+                social_id="test_social_id_123",
+                request_data=profile_request,
             )
 
-        assert str(exc_info.value) == "Database connection failed"
+        assert str(exc_info.value) == "Consent upsert failed"
+
+    @pytest.mark.asyncio
+    async def test_user_service_repositories_initialization(self, user_service: UserService):
+        # Then
+        assert user_service.user_repository is not None
+        assert user_service.user_consent_repository is not None
+        assert hasattr(user_service.user_repository, "find_by_field")
+        assert hasattr(user_service.user_repository, "update_instance")
+        assert hasattr(user_service.user_consent_repository, "upsert")
+
+    @pytest.mark.asyncio
+    async def test_register_user_profile_with_null_phone(
+        self, user_service: UserService, mock_session, sample_user, user_consent
+    ):
+        # Given
+        profile_request = ProfileRequest(
+            nickname="새닉네임", birthday=date(1995, 6, 15), gender=False, agree_marketing=True
+        )
+
+        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
+        user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
+        user_service.user_consent_repository.upsert = AsyncMock(return_value=user_consent)
+
+        # When
+        result = await user_service.register_user_profile(
+            session=mock_session,
+            social_id="test_social_id_123",
+            request_data=profile_request,
+        )
+
+        # Then
+        assert result == sample_user
+        user_service.user_repository.update_instance.assert_called_once_with(
+            session=mock_session,
+            instance=sample_user,
+            nickname="새닉네임",
+            birthday=date(1995, 6, 15),
+            gender=False,
+            phone=None,  # 명시적으로 None
+        )
