@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.post.v1.schema import PostRequest, PostResponse
@@ -22,15 +22,9 @@ async def upsert_post(
     session: AsyncSession = Depends(get_db_session),
     post_service: PostService = Depends(),
 ):
-    try:
-        await post_service.upsert_post(
-            user_social_id=current_user_social_id,
-            post_request=request_data,
-            session=session,
-        )
-        return PostResponse(success=True, status_code=status.HTTP_201_CREATED)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"게시물 처리 실패: {str(e)}",
-        )
+    await post_service.upsert_post(
+        user_social_id=current_user_social_id,
+        post_request=request_data,
+        session=session,
+    )
+    return PostResponse(success=True, status_code=status.HTTP_201_CREATED)
