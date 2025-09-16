@@ -11,4 +11,4 @@ class PostRequest(CamelBaseModel):
 
 class PostResponse(CamelBaseModel):
     success: bool
-    status_code: str
+    status_code: int
