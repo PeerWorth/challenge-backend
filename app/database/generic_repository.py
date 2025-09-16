@@ -3,9 +3,9 @@ from typing import Any, List, Optional, Type, TypeVar
 from sqlalchemy import select
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeMeta
+from sqlmodel import SQLModel
 
-T = TypeVar("T", bound=DeclarativeMeta)
+T = TypeVar("T", bound=SQLModel)
 
 
 class GenericRepository:
@@ -70,6 +70,15 @@ class GenericRepository:
         await session.delete(instance)
         await session.flush()
         return True
+
+    async def delete_by_field(self, session: AsyncSession, **filters) -> int:
+        """필드 조건으로 레코드 삭제"""
+        from sqlalchemy import delete
+
+        stmt = delete(self.model).filter_by(**filters)
+        result = await session.execute(stmt)
+        await session.flush()
+        return result.rowcount
 
     async def upsert(
         self, session: AsyncSession, conflict_keys: List[str], return_instance: bool = False, **data: Any
