@@ -61,7 +61,7 @@ Resources:
           PROJECT_NAME: !Sub "{{resolve:ssm:/challenge/${Environment}/app/project_name}}"
           JWT_ALGORITHM: !Sub "{{resolve:ssm:/challenge/${Environment}/app/jwt_algorithm}}"
           S3_BUCKET_NAME: !Sub "{{resolve:ssm:/challenge/${Environment}/app/s3_bucket_name}}"
-          AWS_REGION: !Sub "{{resolve:ssm:/challenge/${Environment}/app/aws_region}}"
+          CUSTOM_AWS_REGION: !Sub "{{resolve:ssm:/challenge/${Environment}/app/custom_aws_region}}"
 
           # Database 연결 정보 (비민감 정보는 Parameter Store)
           DB_HOST: !Sub "{{resolve:ssm:/challenge/${Environment}/db/host}}"

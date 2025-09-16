@@ -15,7 +15,7 @@ class MediaService:
     def __init__(self):
         self.s3_client: S3Client = boto3.client(
             "s3",
-            region_name=os.getenv("AWS_REGION"),
+            region_name=os.getenv("CUSTOM_AWS_REGION"),
         )
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
