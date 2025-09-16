@@ -7,6 +7,7 @@ import boto3
 from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 
+from app.module.media.constants import PRESIGNED_URL_EXPIRE_SEC
 from app.module.media.enums import UploadType
 
 
@@ -20,7 +21,7 @@ class MediaService:
         if not bucket_name:
             raise ValueError("S3_BUCKET_NAME 환경변수가 설정되지 않았습니다.")
         self.bucket_name = bucket_name
-        self.presigned_url_expiration = 3600
+        self.presigned_url_expiration = PRESIGNED_URL_EXPIRE_SEC
 
     def generate_file_key(
         self,
@@ -29,7 +30,7 @@ class MediaService:
         file_extension = "jpg"
 
         today = datetime.now()
-        date_path = today.strftime("%Y/%m/%d")
+        date_path = today.strftime("%Y-%m-%d")
         unique_id = uuid.uuid4().hex[:8]
         return f"{upload_type}/{date_path}/{unique_id}.{file_extension}"
 
