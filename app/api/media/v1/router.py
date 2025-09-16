@@ -20,7 +20,6 @@ async def create_presigned_url(
     media_service: MediaService = Depends(),
 ):
     url_info = media_service.create_presigned_upload_url(
-        user_id=current_user_social_id,
         upload_type=request_data.upload_type,
     )
 

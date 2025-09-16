@@ -33,12 +33,20 @@ boto3==1.40.31 \
     --hash=sha256:61d5f9975c54ff919a24ff9d472c6c09c8a443a083fe56d30c04fc22d22ac42b \
     --hash=sha256:8c5f1270f09431694412f326cfb5ac9786d41ea3bc6ac54cbb7161d40afc660d
     # via challenge-backend
+boto3-stubs==1.40.31 \
+    --hash=sha256:60f9ebf463880bd037b2c4bd44ec8281de90d7eabd9cd223c0f379823586a7f8 \
+    --hash=sha256:99d26772365a807024a71c31ddf557a8bd042622e29a3a1f748d689f8cfb4f78
+    # via challenge-backend
 botocore==1.40.31 \
     --hash=sha256:4033a00f8c6a4b5c3acb30af9283963123917227a437e5fc165189d07bd3cf8a \
     --hash=sha256:9496b91bbe40ed01d341dc8f6ff0492d7f546e80f1a862b00ec5bc9045fa3324
     # via
     #   boto3
     #   s3transfer
+botocore-stubs==1.40.31 \
+    --hash=sha256:017bcea5919242b67e80e6a271149d67cad1d06bd7adac5ab58e32299dba83dc \
+    --hash=sha256:a3fc8d12624bd867171745d21d2e11bd9d9a5cd142004ddc37d4594fc5d5c732
+    # via boto3-stubs
 certifi==2025.8.3 \
     --hash=sha256:e564105f78ded564e3ae7c923924435e1daa7463faeab5bb932bc53ffae63407 \
     --hash=sha256:f6c12493cfb1b06ba2ff328595af9350c65d6644968e5d3a2ffd78699af217a5
@@ -264,6 +272,10 @@ mypy==1.17.1 \
     --hash=sha256:c49562d3d908fd49ed0938e5423daed8d407774a479b595b143a3d7f87cdae6a \
     --hash=sha256:c837b896b37cd103570d776bda106eabb8737aa6dd4f248451aecf53030cdbeb \
     --hash=sha256:fa6ffadfbe6994d724c5a1bb6123a7d27dd68fc9c059561cd33b664a79578e14
+mypy-boto3-s3==1.40.26 \
+    --hash=sha256:6d055d16ef89a0133ade92f6b4f09603e4acc31a0f5e8f846edf4eb48f17b5a7 \
+    --hash=sha256:8d2bfd1052894d0e84c9fb9358d838ba0eed0265076c7dd7f45622c770275c99
+    # via boto3-stubs
 mypy-extensions==1.1.0 \
     --hash=sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505 \
     --hash=sha256:52e68efc3284861e772bbcd66823fde5ae21fd2fdb51c62a211403730b916558
@@ -448,6 +460,14 @@ starlette==0.47.3 \
     --hash=sha256:6bc94f839cc176c4858894f1f8908f0ab79dfec1a6b8402f6da9be26ebea52e9 \
     --hash=sha256:89c0778ca62a76b826101e7c709e70680a1699ca7da6b44d38eb0a7e61fe4b51
     # via fastapi
+types-awscrt==0.27.6 \
+    --hash=sha256:18aced46da00a57f02eb97637a32e5894dc5aa3dc6a905ba3e5ed85b9f3c526b \
+    --hash=sha256:9d3f1865a93b8b2c32f137514ac88cb048b5bc438739945ba19d972698995bfb
+    # via botocore-stubs
+types-s3transfer==0.13.1 \
+    --hash=sha256:4ff730e464a3fd3785b5541f0f555c1bd02ad408cf82b6b7a95429f6b0d26b4a \
+    --hash=sha256:ce488d79fdd7d3b9d39071939121eca814ec65de3aa36bdce1f9189c0a61cc80
+    # via boto3-stubs
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
