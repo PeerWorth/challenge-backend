@@ -10,7 +10,7 @@ from app.module.media.media_service import MediaService
 
 
 class TestMediaService:
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     def test_init_success(self, mock_boto3_client):
         # given
@@ -32,7 +32,7 @@ class TestMediaService:
         with pytest.raises(ValueError, match="S3_BUCKET_NAME 환경변수가 설정되지 않았습니다."):
             MediaService()
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     @patch("uuid.uuid4")
     @patch("app.module.media.media_service.datetime")
@@ -49,7 +49,7 @@ class TestMediaService:
         # then
         assert result == "content/2025-09-16/abcd1234.jpg"
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     @patch("uuid.uuid4")
     @patch("app.module.media.media_service.datetime")
@@ -66,7 +66,7 @@ class TestMediaService:
         # then
         assert result == "profile/2023-12-25/xyz98765.jpg"
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     def test_create_presigned_upload_url_success(self, mock_boto3_client):
         # given
@@ -90,7 +90,7 @@ class TestMediaService:
         assert result["fields"]["policy"] == "encoded_policy"
         mock_s3_client.generate_presigned_post.assert_called_once()
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     def test_create_presigned_upload_url_default_upload_type(self, mock_boto3_client):
         # given
@@ -109,7 +109,7 @@ class TestMediaService:
         assert result["upload_url"] == "https://test-bucket.s3.amazonaws.com/"
         mock_s3_client.generate_presigned_post.assert_called_once()
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     def test_create_presigned_upload_url_client_error(self, mock_boto3_client):
         # given
@@ -126,7 +126,7 @@ class TestMediaService:
         with pytest.raises(Exception, match="S3 presigned URL 생성 실패: AccessDenied - Access denied"):
             service.create_presigned_upload_url(UploadType.CONTENT)
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     def test_create_presigned_upload_url_client_error_missing_fields(self, mock_boto3_client):
         # given
@@ -140,7 +140,7 @@ class TestMediaService:
         with pytest.raises(Exception, match="S3 presigned URL 생성 실패: Unknown - Unknown error"):
             service.create_presigned_upload_url(UploadType.PROFILE)
 
-    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "AWS_REGION": "us-east-1"})
+    @patch.dict(os.environ, {"S3_BUCKET_NAME": "test-bucket", "CUSTOM_AWS_REGION": "us-east-1"})
     @patch("boto3.client")
     def test_create_presigned_upload_url_generic_exception(self, mock_boto3_client):
         # given
