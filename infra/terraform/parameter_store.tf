@@ -6,7 +6,7 @@ resource "aws_ssm_parameter" "app_config" {
     "project_name"  = var.project_name
     "jwt_algorithm" = "HS256"
     "s3_bucket_name" = "challenge-backend-media-${var.environment}"
-    "aws_region"     = var.aws_region
+    "custom_aws_region" = var.aws_region
   }
 
   name  = "/${var.project_name}/${var.environment}/app/${each.key}"
