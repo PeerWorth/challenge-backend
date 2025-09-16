@@ -49,6 +49,7 @@ class MediaService:
 
             return {
                 "upload_url": response["url"],
+                "file_key": file_key,
                 "fields": response["fields"],
             }
 

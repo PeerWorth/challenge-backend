@@ -11,7 +11,7 @@ media_router = APIRouter(prefix="/v1")
     "/presigned-url",
     summary="S3 presigned URL을 반환합니다",
     description="클라이언트가 S3에 직접 파일을 업로드할 수 있는 presigned URL을 생성하여 반환합니다.",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
     response_model=S3UrlResponse,
 )
 async def create_presigned_url(
@@ -25,5 +25,6 @@ async def create_presigned_url(
 
     return S3UrlResponse(
         upload_url=url_info["upload_url"],
+        file_key=url_info["file_key"],
         fields=url_info["fields"],
     )
