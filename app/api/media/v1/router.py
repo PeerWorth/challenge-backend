@@ -4,10 +4,10 @@ from app.api.media.v1.schema import S3UrlRequest, S3UrlResponse
 from app.module.auth.dependency import verify_access_token
 from app.module.media.media_service import MediaService
 
-user_router = APIRouter(prefix="/v1")
+media_router = APIRouter(prefix="/v1")
 
 
-@user_router.post(
+@media_router.post(
     "/presigned-url",
     summary="S3 presigned URL을 반환합니다",
     description="클라이언트가 S3에 직접 파일을 업로드할 수 있는 presigned URL을 생성하여 반환합니다.",
@@ -26,7 +26,5 @@ async def create_presigned_url(
 
     return S3UrlResponse(
         upload_url=url_info["upload_url"],
-        file_url=url_info["file_url"],
-        expires_in=url_info["expires_in"],
         fields=url_info["fields"],
     )

@@ -44,12 +44,8 @@ class MediaService:
                 ExpiresIn=self.presigned_url_expiration,
             )
 
-            file_url = f"https://{self.bucket_name}.s3.ap-northeast-2.amazonaws.com/{file_key}"  # noqa: E231
-
             return {
                 "upload_url": response["url"],
-                "file_url": file_url,
-                "expires_in": self.presigned_url_expiration,
                 "fields": response["fields"],
             }
 
