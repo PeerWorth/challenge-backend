@@ -37,11 +37,13 @@ class UserService:
         **update_data: Any,
     ) -> User:
         user = await self.user_repository.find_by_field(session, "social_id", social_id)
-
         if not user:
             raise UserNotFoundException()
 
-        protected_fields = {"provider", "social_id", "id"}
+        # Protected fields that should not be updated
+        protected_fields = {"id", "provider", "social_id", "created_at", "updated_at"}
+
+        # Filter out protected fields
         filtered_data = {k: v for k, v in update_data.items() if k not in protected_fields}
 
         updated_user = await self.user_repository.update_instance(
@@ -64,7 +66,6 @@ class UserService:
             nickname=request_data.nickname,
             birthday=request_data.birthday,
             gender=request_data.gender,
-            phone=None,
         )
 
         await self.upsert_user_consent(
@@ -79,13 +80,6 @@ class UserService:
             user_id=updated_user.id,
             event=AgreeTypes.TERM_OF_USE.value,
             agree=True,
-        )
-
-        await self.upsert_user_consent(
-            session=session,
-            user_id=updated_user.id,
-            event=AgreeTypes.MARKETING.value,
-            agree=request_data.agree_marketing,
         )
 
         return updated_user

@@ -1,5 +1,3 @@
-from datetime import date
-
 from sqlmodel import Field, Relationship, UniqueConstraint
 
 from app.common.mixin.timestamp import TimestampMixin
@@ -13,9 +11,8 @@ class User(TimestampMixin, table=True):  # type: ignore
     provider: str = Field(nullable=False)
     social_id: str = Field(nullable=False)
     nickname: str = Field(nullable=True, unique=True)
-    birthday: date = Field(nullable=True)
+    birthday: int = Field(nullable=True)
     gender: bool = Field(nullable=True)
-    phone: str = Field(nullable=True)
 
     consent: list["UserConsent"] = Relationship(
         back_populates="user",

@@ -1,4 +1,3 @@
-from datetime import date
 from unittest.mock import AsyncMock
 
 import pytest
@@ -26,9 +25,8 @@ class TestUserService:
         user.id = 1
         user.social_id = "test_social_id_123"
         user.nickname = "기존닉네임"
-        user.birthday = date(1990, 1, 1)
+        user.birthday = 1990
         user.gender = True
-        user.phone = "01012345678"
         return user
 
     @pytest.fixture
@@ -37,14 +35,13 @@ class TestUserService:
         user.id = 1
         user.social_id = "test_social_id_123"
         user.nickname = "새닉네임"
-        user.birthday = date(1995, 6, 15)
+        user.birthday = 1995
         user.gender = False
-        user.phone = None
         return user
 
     @pytest.fixture
     def profile_request(self):
-        return ProfileRequest(nickname="새닉네임", birthday=date(1995, 6, 15), gender=False, agree_marketing=True)
+        return ProfileRequest(nickname="새닉네임", birthday=1995, gender=False)
 
     @pytest.fixture
     def user_consent(self):
@@ -71,9 +68,8 @@ class TestUserService:
             session=mock_session,
             social_id=social_id,
             nickname="새닉네임",
-            birthday=date(1995, 6, 15),
+            birthday=1995,
             gender=False,
-            phone=None,
         )
 
         # Then
@@ -83,9 +79,8 @@ class TestUserService:
             session=mock_session,
             instance=sample_user,
             nickname="새닉네임",
-            birthday=date(1995, 6, 15),
+            birthday=1995,
             gender=False,
-            phone=None,
         )
 
     @pytest.mark.asyncio
@@ -174,12 +169,11 @@ class TestUserService:
             session=mock_session,
             instance=sample_user,
             nickname="새닉네임",
-            birthday=date(1995, 6, 15),
+            birthday=1995,
             gender=False,
-            phone=None,
         )
 
-        assert user_service.user_consent_repository.upsert.call_count == 3
+        assert user_service.user_consent_repository.upsert.call_count == 2
 
         calls = user_service.user_consent_repository.upsert.call_args_list
 
@@ -202,24 +196,12 @@ class TestUserService:
             "agree": True,
         }
 
-        # Marketing consent
-        assert calls[2][1] == {
-            "session": mock_session,
-            "conflict_keys": ["user_id", "event"],
-            "return_instance": False,  # 추가
-            "user_id": 1,
-            "event": AgreeTypes.MARKETING.value,
-            "agree": True,
-        }
-
     @pytest.mark.asyncio
-    async def test_register_user_profile_marketing_consent_false(
+    async def test_register_user_profile_success_with_two_consents(
         self, user_service: UserService, mock_session, sample_user, user_consent
     ):
         # Given
-        profile_request = ProfileRequest(
-            nickname="새닉네임", birthday=date(1995, 6, 15), gender=False, agree_marketing=False  # False로 설정
-        )
+        profile_request = ProfileRequest(nickname="새닉네임", birthday=1995, gender=False)
 
         user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
@@ -235,10 +217,8 @@ class TestUserService:
         # Then
         assert result == sample_user
 
-        # Marketing consent가 False로 호출되었는지 확인
-        calls = user_service.user_consent_repository.upsert.call_args_list
-        marketing_call = calls[2][1]
-        assert marketing_call["agree"] is False
+        # 2개의 consent만 호출되었는지 확인
+        assert user_service.user_consent_repository.upsert.call_count == 2
 
     @pytest.mark.asyncio
     async def test_register_user_profile_user_not_found(self, user_service: UserService, mock_session, profile_request):
@@ -280,34 +260,3 @@ class TestUserService:
         assert hasattr(user_service.user_repository, "find_by_field")
         assert hasattr(user_service.user_repository, "update_instance")
         assert hasattr(user_service.user_consent_repository, "upsert")
-
-    @pytest.mark.asyncio
-    async def test_register_user_profile_with_null_phone(
-        self, user_service: UserService, mock_session, sample_user, user_consent
-    ):
-        # Given
-        profile_request = ProfileRequest(
-            nickname="새닉네임", birthday=date(1995, 6, 15), gender=False, agree_marketing=True
-        )
-
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
-        user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
-        user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
-
-        # When
-        result = await user_service.register_user_profile(
-            session=mock_session,
-            social_id="test_social_id_123",
-            request_data=profile_request,
-        )
-
-        # Then
-        assert result == sample_user
-        user_service.user_repository.update_instance.assert_called_once_with(
-            session=mock_session,
-            instance=sample_user,
-            nickname="새닉네임",
-            birthday=date(1995, 6, 15),
-            gender=False,
-            phone=None,  # 명시적으로 None
-        )

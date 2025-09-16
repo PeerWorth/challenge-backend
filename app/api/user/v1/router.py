@@ -9,11 +9,11 @@ from app.module.user.user_service import UserService
 user_router = APIRouter(prefix="/v1")
 
 
-@user_router.post(
-    "/profile",
+@user_router.put(
+    "/onboarding",
     summary="회원가입 시 유저 프로필 정보 저장",
     description="JWT 토큰을 통해 인증된 사용자의 프로필 정보를 저장합니다.",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=ProfileResponse,
 )
 async def submit_user_profile(
