@@ -52,6 +52,20 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "media" {
   }
 }
 
+# S3 버킷 Lifecycle 정책 (미완성 업로드만 정리)
+resource "aws_s3_bucket_lifecycle_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  rule {
+    id     = "cleanup-incomplete-uploads"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1  # 미완성 멀티파트 업로드 1일 후 정리
+    }
+  }
+}
+
 # Lambda 함수용 IAM 정책
 resource "aws_iam_policy" "lambda_s3_access" {
   name        = "${var.project_name}-lambda-s3-access-${var.environment}"

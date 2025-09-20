@@ -1,6 +1,6 @@
 from typing import Any, List, Optional, Type, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel
@@ -72,9 +72,6 @@ class GenericRepository:
         return True
 
     async def delete_by_field(self, session: AsyncSession, **filters) -> int:
-        """필드 조건으로 레코드 삭제"""
-        from sqlalchemy import delete
-
         stmt = delete(self.model).filter_by(**filters)
         result = await session.execute(stmt)
         await session.flush()
