@@ -2,8 +2,7 @@ from datetime import datetime, timedelta
 
 import boto3
 from enums import S3ObjectStatus
-
-from infra.workers.image_orphan_cleaner.schema import S3Object, S3ObjectTags
+from schema import S3Object, S3ObjectTags
 
 
 class S3CleanupService:

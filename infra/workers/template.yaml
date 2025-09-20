@@ -40,7 +40,7 @@ Resources:
       FunctionName: !Sub '${ProjectName}-image-orphan-cleanup-${Environment}'
       CodeUri: image_orphan_cleaner/
       Handler: handler.lambda_handler
-      Description: S3 image orphan files cleanup function
+      Description: S3 이미지 Orphan 삭제
       Environment:
         Variables:
           BUCKET_NAME: !Ref BucketName

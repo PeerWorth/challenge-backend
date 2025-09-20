@@ -1,10 +1,10 @@
 import os
-from typing import Any, Dict
+from typing import Any
 
 from service import S3CleanupService
 
 
-def lambda_handler(event: Dict[str, Any], context: Any) -> None:
+def lambda_handler(event: dict[str, Any], context: Any) -> None:
 
     bucket_name = os.environ["BUCKET_NAME"]
     safety_margin_days = int(os.environ.get("SAFETY_MARGIN_DAYS", "2"))
