@@ -1,28 +1,16 @@
-import json
 import os
 from typing import Any, Dict
 
 from service import S3CleanupService
 
 
-def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    try:
-        bucket_name = os.environ["BUCKET_NAME"]
-        safety_margin_days = int(os.environ.get("SAFETY_MARGIN_DAYS", "2"))
+def lambda_handler(event: Dict[str, Any], context: Any) -> None:
 
-        cleanup_service = S3CleanupService(bucket_name=bucket_name, safety_margin_days=safety_margin_days)
+    bucket_name = os.environ["BUCKET_NAME"]
+    safety_margin_days = int(os.environ.get("SAFETY_MARGIN_DAYS", "2"))
 
-        result = cleanup_service.cleanup_orphan_files()
+    cleanup_service = S3CleanupService(bucket_name=bucket_name, safety_margin_days=safety_margin_days)
 
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"message": "Image orphan cleanup completed successfully", "result": result}, indent=2),
-        }
+    cleanup_service.cleanup_orphan_files()
 
-    except KeyError as e:
-        error_msg = f"Missing required environment variable: {e}"
-        return {"statusCode": 500, "body": json.dumps({"error": error_msg})}
-
-    except Exception as e:
-        error_msg = f"Image orphan cleanup failed: {str(e)}"
-        return {"statusCode": 500, "body": json.dumps({"error": error_msg})}
+    return

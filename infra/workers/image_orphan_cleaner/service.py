@@ -1,118 +1,59 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import boto3
-from botocore.exceptions import ClientError
+from enums import S3ObjectStatus
+
+from infra.workers.image_orphan_cleaner.schema import S3Object, S3ObjectTags
 
 
 class S3CleanupService:
-
     def __init__(self, bucket_name: str, safety_margin_days: int = 2):
         self.s3_client = boto3.client("s3")
         self.bucket_name = bucket_name
         self.safety_margin_days = safety_margin_days
-        self.confirmed_tag_value = "confirmed"
 
-    def cleanup_orphan_files(self) -> Dict[str, Any]:
+    def cleanup_orphan_files(self) -> None:
         cutoff_time = datetime.now() - timedelta(days=self.safety_margin_days)
 
-        deleted_files = []
-        skipped_files = []
-        errors = []
+        objects = self._list_all_objects()
 
-        try:
+        for obj in objects:
+            if not obj.is_old_enough(cutoff_time):
+                continue
 
-            objects = self._list_all_objects()
+            if self._is_confirmed_file(obj.key):
+                continue
 
-            for obj in objects:
-                if not self._is_old_enough(obj, cutoff_time):
-                    continue
+            self._delete_file(obj.key)
 
-                file_key = obj["Key"]
+        return
 
-                if self._is_confirmed_file(file_key):
-                    skipped_files.append(file_key)
-                    continue
+    def _list_all_objects(self) -> list[S3Object]:
+        result = []
 
-                if self._delete_file(file_key):
-                    deleted_files.append(file_key)
-                else:
-                    error_msg = f"Failed to delete {file_key}"
-                    errors.append(error_msg)
+        paginator = self.s3_client.get_paginator("list_objects_v2")
+        pages = paginator.paginate(Bucket=self.bucket_name)
 
-        except Exception as e:
-            error_msg = f"Cleanup process failed: {str(e)}"
-            errors.append(error_msg)
+        for page in pages:
+            if "Contents" in page:
+                s3_objects = [S3Object.from_s3_response(dict(obj_data)) for obj_data in page["Contents"]]
+                result.extend(s3_objects)
 
-        return {
-            "deleted_count": len(deleted_files),
-            "skipped_count": len(skipped_files),
-            "error_count": len(errors),
-            "deleted_files": deleted_files,
-            "skipped_files": skipped_files,
-            "errors": errors,
-            "cutoff_time": cutoff_time.isoformat(),
-            "safety_margin_days": self.safety_margin_days,
-        }
-
-    def _list_all_objects(self) -> List[Dict[str, Any]]:
-        objects = []
-
-        try:
-            paginator = self.s3_client.get_paginator("list_objects_v2")
-            pages = paginator.paginate(Bucket=self.bucket_name)
-
-            for page in pages:
-                if "Contents" in page:
-                    objects.extend(page["Contents"])
-
-        except ClientError:
-            raise
-
-        return objects
-
-    def _is_old_enough(self, obj: Dict[str, Any], cutoff_time: datetime) -> bool:
-        if "LastModified" not in obj:
-            return False
-
-        last_modified = obj["LastModified"].replace(tzinfo=None)
-        return last_modified < cutoff_time
+        return result
 
     def _is_confirmed_file(self, file_key: str) -> bool:
         try:
             response = self.s3_client.get_object_tagging(Bucket=self.bucket_name, Key=file_key)
 
-            if "TagSet" not in response:
-                return False
+            # Pydantic 모델로 변환
+            s3_tags = S3ObjectTags.from_s3_response(dict(response))
 
-            tags = {tag["Key"]: tag["Value"] for tag in response["TagSet"]}
-            return tags.get("status") == self.confirmed_tag_value
-
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "")
-
-            if error_code == "NoSuchKey":
-                return False
-            elif error_code in ["AccessDenied", "NoSuchTagSet"]:
-                return False
-            else:
-                return False
+            # status=confirmed 태그 확인
+            return s3_tags.has_status_confirmed(S3ObjectStatus.CONFIRMED)
 
         except Exception:
             return False
 
-    def _delete_file(self, file_key: str) -> bool:
-        try:
-            self.s3_client.delete_object(Bucket=self.bucket_name, Key=file_key)
-            return True
-
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "")
-
-            if error_code == "NoSuchKey":
-                return True
-            else:
-                return False
-
-        except Exception:
-            return False
+    def _delete_file(self, file_key: str) -> None:
+        self.s3_client.delete_object(Bucket=self.bucket_name, Key=file_key)
+        return

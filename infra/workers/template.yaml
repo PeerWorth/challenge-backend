@@ -34,7 +34,6 @@ Globals:
         PROJECT_NAME: !Ref ProjectName
 
 Resources:
-  # S3 Image Orphan Cleanup Function
   ImageOrphanCleanupFunction:
     Type: AWS::Serverless::Function
     Properties:
