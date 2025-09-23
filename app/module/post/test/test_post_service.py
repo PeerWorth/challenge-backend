@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,10 +12,11 @@ from app.module.post.post_service import PostService
 
 @pytest.fixture
 def post_service():
-    service = PostService()
-    service.post_repository = Mock(spec=GenericRepository)
-    service.post_image_repository = Mock(spec=GenericRepository)
-    service.media_service = Mock()
+    with patch("app.module.post.post_service.MediaService"):
+        service = PostService()
+        service.post_repository = Mock(spec=GenericRepository)
+        service.post_image_repository = Mock(spec=GenericRepository)
+        service.media_service = Mock()
     return service
 
 
@@ -44,13 +45,13 @@ class TestPostService:
         post_service.post_image_repository.create = AsyncMock()
 
         # when
-        await post_service.add_post(user_social_id="user123", post_request=post_request, session=mock_session)
+        await post_service.add_post(user_id=123, post_request=post_request, session=mock_session)
 
         # then
         post_service.post_repository.create.assert_called_once_with(
             mock_session,
             return_instance=True,
-            social_id="user123",
+            user_id=123,
             mission_id=1,
             content="테스트 게시물",
         )
@@ -68,15 +69,13 @@ class TestPostService:
         post_service.post_image_repository.create = AsyncMock()
 
         # when
-        await post_service.add_post(
-            user_social_id="user123", post_request=post_request_without_image, session=mock_session
-        )
+        await post_service.add_post(user_id=123, post_request=post_request_without_image, session=mock_session)
 
         # then
         post_service.post_repository.create.assert_called_once_with(
             mock_session,
             return_instance=True,
-            social_id="user123",
+            user_id=123,
             mission_id=1,
             content="테스트 게시물",
         )
@@ -95,7 +94,7 @@ class TestPostService:
         post_service.post_image_repository.create = AsyncMock()
 
         # when
-        await post_service.add_post(user_social_id="user789", post_request=profile_request, session=mock_session)
+        await post_service.add_post(user_id=789, post_request=profile_request, session=mock_session)
 
         # then
         post_service.post_image_repository.create.assert_called_once_with(

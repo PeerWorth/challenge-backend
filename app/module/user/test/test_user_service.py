@@ -54,27 +54,24 @@ class TestUserService:
 
     # ===== update_user_profile 테스트 =====
     @pytest.mark.asyncio
-    async def test_update_user_profile_success_with_kwargs(
-        self, user_service: UserService, mock_session, sample_user, updated_user
-    ):
+    async def test_update_user_profile_success_with_kwargs(self, user_service: UserService, mock_session, sample_user):
         """update_user_profile이 **kwargs 방식으로 잘 동작하는지 테스트"""
         # Given
-        social_id = "test_social_id_123"
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
-        user_service.user_repository.update_instance = AsyncMock(return_value=updated_user)
+        user_id = 1
+        user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
+        user_service.user_repository.update_instance = AsyncMock(return_value=None)
 
         # When
-        result = await user_service.update_user_profile(
+        await user_service.update_user_profile(
             session=mock_session,
-            social_id=social_id,
+            user_id=user_id,
             nickname="새닉네임",
             birthday=1995,
             gender=False,
         )
 
         # Then
-        assert result == updated_user
-        user_service.user_repository.find_by_field.assert_called_once_with(mock_session, "social_id", social_id)
+        user_service.user_repository.get_by_id.assert_called_once_with(mock_session, user_id)
         user_service.user_repository.update_instance.assert_called_once_with(
             session=mock_session,
             instance=sample_user,
@@ -85,24 +82,23 @@ class TestUserService:
 
     @pytest.mark.asyncio
     async def test_update_user_profile_protected_fields_filtered(
-        self, user_service: UserService, mock_session, sample_user, updated_user
+        self, user_service: UserService, mock_session, sample_user
     ):
         # Given
-        social_id = "test_social_id_123"
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
-        user_service.user_repository.update_instance = AsyncMock(return_value=updated_user)
+        user_id = 1
+        user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
+        user_service.user_repository.update_instance = AsyncMock(return_value=None)
 
         # When - protected fields 포함해서 호출
-        result = await user_service.update_user_profile(
+        await user_service.update_user_profile(
             session=mock_session,
-            social_id=social_id,
+            user_id=user_id,
             nickname="새닉네임",
             provider="google",  # protected field
             id=999,  # protected field
         )
 
         # Then - protected fields는 제외되고 호출되어야 함
-        assert result == updated_user
         user_service.user_repository.update_instance.assert_called_once_with(
             session=mock_session,
             instance=sample_user,
@@ -112,14 +108,14 @@ class TestUserService:
     @pytest.mark.asyncio
     async def test_update_user_profile_user_not_found(self, user_service: UserService, mock_session):
         # Given
-        social_id = "nonexistent_social_id"
-        user_service.user_repository.find_by_field = AsyncMock(return_value=None)
+        user_id = 999
+        user_service.user_repository.get_by_id = AsyncMock(return_value=None)
 
         # When & Then
         with pytest.raises(UserNotFoundException):
             await user_service.update_user_profile(
                 session=mock_session,
-                social_id=social_id,
+                user_id=user_id,
                 nickname="새닉네임",
             )
 
@@ -151,20 +147,19 @@ class TestUserService:
         self, user_service: UserService, mock_session, sample_user, profile_request, user_consent
     ):
         # Given
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
+        user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
         user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
 
         # When
-        result = await user_service.register_user_profile(
+        await user_service.register_user_profile(
             session=mock_session,
-            social_id="test_social_id_123",
+            user_id=1,
             request_data=profile_request,
         )
 
         # Then
-        assert result == sample_user
-
+        user_service.user_repository.get_by_id.assert_called_once_with(mock_session, 1)
         user_service.user_repository.update_instance.assert_called_once_with(
             session=mock_session,
             instance=sample_user,
@@ -203,19 +198,19 @@ class TestUserService:
         # Given
         profile_request = ProfileRequest(nickname="새닉네임", birthday=1995, gender=False)
 
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
+        user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
         user_service.user_consent_repository.upsert = AsyncMock(return_value=None)
 
         # When
-        result = await user_service.register_user_profile(
+        await user_service.register_user_profile(
             session=mock_session,
-            social_id="test_social_id_123",
+            user_id=1,
             request_data=profile_request,
         )
 
         # Then
-        assert result == sample_user
+        user_service.user_repository.get_by_id.assert_called_once_with(mock_session, 1)
 
         # 2개의 consent만 호출되었는지 확인
         assert user_service.user_consent_repository.upsert.call_count == 2
@@ -223,13 +218,13 @@ class TestUserService:
     @pytest.mark.asyncio
     async def test_register_user_profile_user_not_found(self, user_service: UserService, mock_session, profile_request):
         # Given
-        user_service.user_repository.find_by_field = AsyncMock(return_value=None)
+        user_service.user_repository.get_by_id = AsyncMock(return_value=None)
 
         # When & Then
         with pytest.raises(UserNotFoundException):
             await user_service.register_user_profile(
                 session=mock_session,
-                social_id="nonexistent_social_id",
+                user_id=999,
                 request_data=profile_request,
             )
 
@@ -238,7 +233,7 @@ class TestUserService:
         self, user_service: UserService, mock_session, sample_user, profile_request
     ):
         # Given
-        user_service.user_repository.find_by_field = AsyncMock(return_value=sample_user)
+        user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
         user_service.user_consent_repository.upsert = AsyncMock(side_effect=Exception("Consent upsert failed"))
 
@@ -246,7 +241,7 @@ class TestUserService:
         with pytest.raises(Exception) as exc_info:
             await user_service.register_user_profile(
                 session=mock_session,
-                social_id="test_social_id_123",
+                user_id=1,
                 request_data=profile_request,
             )
 

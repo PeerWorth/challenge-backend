@@ -14,6 +14,12 @@ class UserService:
         self.user_repository = GenericRepository(User)
         self.user_consent_repository = GenericRepository(UserConsent)
 
+    async def get_user_id_by_social_id(self, session: AsyncSession, social_id: str) -> User:
+        user = await self.user_repository.find_by_field(session, "social_id", social_id)
+        if not user:
+            raise UserNotFoundException()
+        return user  # type: ignore
+
     async def upsert_user_consent(
         self,
         session: AsyncSession,
@@ -33,36 +39,32 @@ class UserService:
     async def update_user_profile(
         self,
         session: AsyncSession,
-        social_id: str,
+        user_id: int,
         **update_data: Any,
-    ) -> User:
-        user = await self.user_repository.find_by_field(session, "social_id", social_id)
+    ) -> None:
+        user = await self.user_repository.get_by_id(session, user_id)
         if not user:
             raise UserNotFoundException()
 
-        # Protected fields that should not be updated
         protected_fields = {"id", "provider", "social_id", "created_at", "updated_at"}
 
-        # Filter out protected fields
         filtered_data = {k: v for k, v in update_data.items() if k not in protected_fields}
 
-        updated_user = await self.user_repository.update_instance(
+        await self.user_repository.update_instance(
             session=session,
             instance=user,
             **filtered_data,
         )
 
-        return updated_user
-
     async def register_user_profile(
         self,
         session: AsyncSession,
-        social_id: str,
+        user_id: int,
         request_data: ProfileRequest,
-    ) -> User:
-        updated_user = await self.update_user_profile(
+    ) -> None:
+        await self.update_user_profile(
             session=session,
-            social_id=social_id,
+            user_id=user_id,
             nickname=request_data.nickname,
             birthday=request_data.birthday,
             gender=request_data.gender,
@@ -70,16 +72,14 @@ class UserService:
 
         await self.upsert_user_consent(
             session=session,
-            user_id=updated_user.id,
+            user_id=user_id,
             event=AgreeTypes.PERSONAL_INFO.value,
             agree=True,
         )
 
         await self.upsert_user_consent(
             session=session,
-            user_id=updated_user.id,
+            user_id=user_id,
             event=AgreeTypes.TERM_OF_USE.value,
             agree=True,
         )
-
-        return updated_user
