@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 
 from app.module.media.constants import PRESIGNED_URL_EXPIRE_SEC
-from app.module.media.enums import UploadType
+from app.module.media.enums import S3ObjectStatus, UploadType
 
 
 class MediaService:
@@ -59,3 +59,20 @@ class MediaService:
             raise Exception(f"S3 presigned URL 생성 실패: {error_code} - {error_message}")
         except Exception as e:
             raise Exception(f"예상치 못한 오류 발생: {str(e)}")
+
+    def mark_file_as_confirmed(
+        self,
+        file_key: str,
+    ) -> None:
+        try:
+            self.s3_client.put_object_tagging(
+                Bucket=self.bucket_name,
+                Key=file_key,
+                Tagging={"TagSet": [{"Key": "status", "Value": S3ObjectStatus.CONFIRMED}]},
+            )
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            error_message = e.response.get("Error", {}).get("Message", "Unknown error")
+            raise Exception(f"파일 태그 업데이트 실패: {error_code} - {error_message}")
+        except Exception as e:
+            raise Exception(f"파일 태그 업데이트 중 오류 발생: {str(e)}")
