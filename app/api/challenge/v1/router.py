@@ -22,6 +22,7 @@ async def get_home_page_info(
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> HomePageResponse:
-    # payload.sub (social_id) 또는 payload.user_id_int 사용 가능
+    current_challenge = await challenge_service.get_current_challenge(session, payload.user_id_int)
+    completed_challenges = await challenge_service.get_completed_challenges(session, payload.user_id_int)
 
-    return  # type: ignore
+    return HomePageResponse(current_challenge=current_challenge, completed_challenges=completed_challenges)
