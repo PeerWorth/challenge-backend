@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 
 from app.api.media.v1.schema import S3UrlRequest, S3UrlResponse
 from app.module.auth.dependency import verify_access_token
+from app.module.auth.schemas import JWTPayload
 from app.module.media.media_service import MediaService
 
 media_router = APIRouter(prefix="/v1")
@@ -16,7 +17,7 @@ media_router = APIRouter(prefix="/v1")
 )
 async def create_presigned_url(
     request_data: S3UrlRequest,
-    current_user_social_id: str = Depends(verify_access_token),
+    payload: JWTPayload = Depends(verify_access_token),
     media_service: MediaService = Depends(),
 ):
     url_info = media_service.create_presigned_upload_url(

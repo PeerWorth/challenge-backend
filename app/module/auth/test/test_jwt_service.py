@@ -27,42 +27,46 @@ class TestJWTService:
     def test_generate_access_token_with_string_id(self, jwt_service: JWTService, mock_current_time: datetime):
         # Given
         social_id = "user_123456"
+        user_id = 1
 
         with patch("app.module.auth.services.jwt_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = mock_current_time
             mock_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
 
             # When
-            token = jwt_service.generate_access_token(social_id)
+            token = jwt_service.generate_access_token(social_id, user_id)
 
             # Then
             decoded = jwt.decode(token, "test_secret_key", algorithms=["HS256"], options={"verify_exp": False})
-            assert decoded["sub"] == "user_123456"
+            assert decoded["social_id"] == "user_123456"
+            assert decoded["user_id"] == "1"
 
             expected_exp = mock_current_time + timedelta(minutes=JWT_ACCESS_TIME_MINUTE)
             assert decoded["exp"] == int(expected_exp.timestamp())
 
     def test_generate_access_token_with_int_id(self, jwt_service: JWTService, mock_current_time):
         # Given
-        social_id = 123456
+        social_id = "123456"
+        user_id = 2
 
         with patch("app.module.auth.services.jwt_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = mock_current_time
             mock_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
 
             # When
-            token = jwt_service.generate_access_token(social_id)
+            token = jwt_service.generate_access_token(social_id, user_id)
 
             # Then
             decoded = jwt.decode(token, "test_secret_key", algorithms=["HS256"], options={"verify_exp": False})
-            assert decoded["sub"] == "123456"
+            assert decoded["social_id"] == "123456"
+            assert decoded["user_id"] == "2"
 
     def test_decode_valid_token(self, jwt_service: JWTService):
         # Given
         payload = {
-            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-            "sub": "test_user_id",
-            "custom_data": "test_value",
+            "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
+            "social_id": "test_social_id",
+            "user_id": "123",
         }
         token = jwt.encode(payload, "test_secret_key", algorithm="HS256")
 
@@ -70,12 +74,17 @@ class TestJWTService:
         decoded = jwt_service.decode_token(token)
 
         # Then
-        assert decoded["sub"] == "test_user_id"
-        assert decoded["custom_data"] == "test_value"
+        assert decoded.social_id == "test_social_id"
+        assert decoded.user_id == "123"
+        assert decoded.user_id_int == 123
 
     def test_decode_expired_token(self, jwt_service: JWTService):
         # Given
-        payload = {"exp": datetime.now(timezone.utc) - timedelta(hours=1), "sub": "test_user_id"}  # 1시간 전 만료
+        payload = {
+            "exp": int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp()),
+            "social_id": "test_social_id",
+            "user_id": "123",
+        }
         token = jwt.encode(payload, "test_secret_key", algorithm="HS256")
 
         # When & Then
@@ -98,8 +107,11 @@ class TestJWTService:
 
     def test_decode_token_with_wrong_secret(self, jwt_service: JWTService):
         # Given
-        payload = {"exp": datetime.now(timezone.utc) + timedelta(hours=1), "sub": "test_user_id"}
-
+        payload = {
+            "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
+            "social_id": "test_social_id",
+            "user_id": "123",
+        }
         token = jwt.encode(payload, "wrong_secret_key", algorithm="HS256")
 
         # When & Then
@@ -111,12 +123,14 @@ class TestJWTService:
 
     def test_different_users_get_different_tokens(self, jwt_service: JWTService):
         # Given
-        user1_id = "user_001"
-        user2_id = "user_002"
+        social_id1 = "user_001"
+        social_id2 = "user_002"
+        user_id1 = 1
+        user_id2 = 2
 
         # When
-        token1 = jwt_service.generate_access_token(user1_id)
-        token2 = jwt_service.generate_access_token(user2_id)
+        token1 = jwt_service.generate_access_token(social_id1, user_id1)
+        token2 = jwt_service.generate_access_token(social_id2, user_id2)
 
         # Then
         assert token1 != token2
@@ -124,5 +138,7 @@ class TestJWTService:
         decoded1 = jwt.decode(token1, "test_secret_key", algorithms=["HS256"])
         decoded2 = jwt.decode(token2, "test_secret_key", algorithms=["HS256"])
 
-        assert decoded1["sub"] == "user_001"
-        assert decoded2["sub"] == "user_002"
+        assert decoded1["social_id"] == "user_001"
+        assert decoded2["social_id"] == "user_002"
+        assert decoded1["user_id"] == "1"
+        assert decoded2["user_id"] == "2"

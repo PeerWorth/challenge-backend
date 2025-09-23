@@ -16,15 +16,20 @@ auth_router = APIRouter(prefix="/v1")
     status_code=status.HTTP_201_CREATED,
     response_model=OAuthResponse,
 )
-async def submit_user_email(
+async def sign_up_login(
     request_data: OAuthRequest,
     session: AsyncSession = Depends(get_db_session),
     auth_service: AuthService = Depends(),
     jwt_service: JWTService = Depends(),
 ) -> OAuthResponse:
     social_id = await auth_service.verify_kakao_token(request_data.id_token)
-    is_new_user = await auth_service.find_or_create_user(session, social_id)
+    user = await auth_service.find_user_by_social_id(session, social_id)
+    is_new_user = False
 
-    access_token = jwt_service.generate_access_token(social_id)
+    if not user:
+        user = await auth_service.create_user_with_social_id(session, social_id)
+        is_new_user = True
+
+    access_token = jwt_service.generate_access_token(social_id, user.id)
 
     return OAuthResponse(access_token=access_token, is_new_user=is_new_user)
