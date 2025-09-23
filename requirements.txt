@@ -275,7 +275,9 @@ mypy==1.17.1 \
 mypy-boto3-s3==1.40.26 \
     --hash=sha256:6d055d16ef89a0133ade92f6b4f09603e4acc31a0f5e8f846edf4eb48f17b5a7 \
     --hash=sha256:8d2bfd1052894d0e84c9fb9358d838ba0eed0265076c7dd7f45622c770275c99
-    # via boto3-stubs
+    # via
+    #   boto3-stubs
+    #   challenge-backend
 mypy-extensions==1.1.0 \
     --hash=sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505 \
     --hash=sha256:52e68efc3284861e772bbcd66823fde5ae21fd2fdb51c62a211403730b916558

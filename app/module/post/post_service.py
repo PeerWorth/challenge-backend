@@ -15,14 +15,14 @@ class PostService:
 
     async def add_post(
         self,
-        user_social_id: str,
+        user_id: int,
         post_request: PostRequest,
         session: AsyncSession,
     ) -> None:
         post = await self.post_repository.create(
             session,
             return_instance=True,
-            social_id=user_social_id,
+            user_id=user_id,
             mission_id=post_request.mission_id,
             content=post_request.content,
         )

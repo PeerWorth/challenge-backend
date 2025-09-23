@@ -6,10 +6,10 @@ from app.module.media.enums import UploadType
 
 class Post(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "post"
-    __table_args__ = (UniqueConstraint("social_id", "mission_id"),)
+    __table_args__ = (UniqueConstraint("user_id", "mission_id"),)
 
     id: int = Field(default=None, primary_key=True)
-    social_id: str = Field(foreign_key="user.social_id", nullable=False)
+    user_id: int = Field(foreign_key="user.id", nullable=False)
     mission_id: int = Field(nullable=False)
     content: str = Field(nullable=False)
 
