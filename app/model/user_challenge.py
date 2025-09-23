@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from sqlmodel import Field, Relationship, UniqueConstraint
@@ -14,7 +13,6 @@ class UserChallenge(TimestampMixin, table=True):  # type: ignore
     user_id: int = Field(foreign_key="user.id", nullable=False)
     challenge_id: int = Field(foreign_key="challenge.id", nullable=False)
     status: str = Field(default="not_started", nullable=False, description="챌린지 상태")
-    completed_at: Optional[datetime] = Field(default=None, nullable=True, description="완료 시간")
     mission_step: int = Field(default=1, nullable=False, description="현재 진행 중인 미션 순서")
 
     missions: list["UserMission"] = Relationship(
@@ -35,7 +33,6 @@ class UserMission(TimestampMixin, table=True):  # type: ignore
     mission_id: int = Field(foreign_key="mission.id", nullable=False)
     post_id: Optional[int] = Field(foreign_key="post.id", nullable=True, description="미션 수행 포스트")
     status: str = Field(default="not_started", nullable=False, description="미션 상태")
-    completed_at: Optional[datetime] = Field(default=None, nullable=True, description="완료 시간")
     reward_earned: int = Field(default=0, nullable=False, description="획득한 보상 금액")
 
     user_challenge: UserChallenge = Relationship(back_populates="missions")
