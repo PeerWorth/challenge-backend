@@ -1,0 +1,47 @@
+# SAM Configuration for Challenge Workers
+
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "challenge-workers"
+s3_bucket = "challenge-sam-artifacts"
+s3_prefix = "workers"
+region = "ap-northeast-2"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = [
+    "Environment=dev",
+    "ProjectName=challenge",
+    "BucketName=challenge-backend-media-dev",
+    "SafetyMarginDays=2"
+]
+
+[default.deploy.tags]
+Environment = "dev"
+Project = "challenge"
+Component = "workers"
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "challenge-workers-prod"
+s3_bucket = "challenge-sam-artifacts-prod"
+s3_prefix = "workers"
+region = "ap-northeast-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = false
+parameter_overrides = [
+    "Environment=prod",
+    "ProjectName=challenge",
+    "BucketName=challenge-backend-media-prod",
+    "SafetyMarginDays=2"
+]
+
+[prod.deploy.tags]
+Environment = "prod"
+Project = "challenge"
+Component = "workers"

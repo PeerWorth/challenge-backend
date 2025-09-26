@@ -1,6 +1,6 @@
 from typing import Any, List, Optional, Type, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel
@@ -18,30 +18,30 @@ class GenericRepository:
         await session.flush()
         return instance
 
-    async def get_by_id(self, session: AsyncSession, id: Any):
-        return await session.get(self.model, id)
+    async def get_by_id(self, session: AsyncSession, id: Any) -> T | None:
+        return await session.get(self.model, id)  # type: ignore
 
-    async def find_one(self, session: AsyncSession, **filters):
+    async def find_one(self, session: AsyncSession, **filters) -> T | None:
         query = select(self.model).filter_by(**filters)
         result = await session.execute(query)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore
 
-    async def find_by_field(self, session: AsyncSession, field_name: str, field_value: Any):
+    async def find_by_field(self, session: AsyncSession, field_name: str, field_value: Any) -> T | None:
         if not hasattr(self.model, field_name):
             raise ValueError(f"모델 {self.model.__name__}에서 필드 '{field_name}'를 찾을 수 없습니다.")
 
         field = getattr(self.model, field_name)
         query = select(self.model).where(field == field_value)
         result = await session.execute(query)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore
 
-    async def find_all(self, session: AsyncSession, **filters) -> List:
+    async def find_all(self, session: AsyncSession, **filters) -> List[T]:
         query = select(self.model).filter_by(**filters)
         result = await session.execute(query)
-        return list(result.scalars().all())
+        return list(result.scalars().all())  # type: ignore
 
     async def update(self, session: AsyncSession, id: Any, **update_data):
-        instance = await self.get_by_id(session, id)
+        instance = await self.get_by_id(session, id)  # type: ignore
         if not instance:
             return None
 
@@ -58,12 +58,12 @@ class GenericRepository:
                 setattr(instance, key, value)
 
         session.add(instance)
-        await session.flush()  # commit 대신 flush 사용
+        await session.flush()
         await session.refresh(instance)
         return instance
 
     async def delete(self, session: AsyncSession, id: Any) -> bool:
-        instance = await self.get_by_id(session, id)
+        instance = await self.get_by_id(session, id)  # type: ignore
         if not instance:
             return False
 
@@ -72,9 +72,6 @@ class GenericRepository:
         return True
 
     async def delete_by_field(self, session: AsyncSession, **filters) -> int:
-        """필드 조건으로 레코드 삭제"""
-        from sqlalchemy import delete
-
         stmt = delete(self.model).filter_by(**filters)
         result = await session.execute(stmt)
         await session.flush()

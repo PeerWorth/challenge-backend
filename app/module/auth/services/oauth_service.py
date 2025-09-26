@@ -17,14 +17,8 @@ class AuthService:
     def __init__(self):
         self.user_repository = GenericRepository(User)
 
-    async def find_or_create_user(self, session: AsyncSession, social_id: str) -> bool:
-
-        existing_user = await self.user_repository.find_one(session, provider=OAuthProvider.KAKAO, social_id=social_id)
-
-        if existing_user:
-            return False
-
-        await self.user_repository.create(
+    async def create_user_with_social_id(self, session: AsyncSession, social_id: str) -> User:
+        return await self.user_repository.create(  # type: ignore
             session,
             provider=OAuthProvider.KAKAO,
             social_id=social_id,
@@ -34,7 +28,10 @@ class AuthService:
             phone=None,
         )
 
-        return True
+    async def find_user_by_social_id(self, session: AsyncSession, social_id: str) -> User | None:
+        return await self.user_repository.find_one(
+            session, provider=OAuthProvider.KAKAO, social_id=social_id
+        )  # type: ignore
 
     async def verify_kakao_token(self, id_token: str) -> str:
         data = {"id_token": id_token}

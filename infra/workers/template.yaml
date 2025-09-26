@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Challenge Backend Workers
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, prod]
+    Default: dev
+    Description: Environment name
+
+  ProjectName:
+    Type: String
+    Default: challenge
+    Description: Project name
+
+  BucketName:
+    Type: String
+    Description: S3 bucket name for media files
+
+  SafetyMarginDays:
+    Type: Number
+    Default: 2
+    Description: Safety margin in days for file cleanup
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        PROJECT_NAME: !Ref ProjectName
+
+Resources:
+  ImageOrphanCleanupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-image-orphan-cleanup-${Environment}'
+      CodeUri: image_orphan_cleaner/
+      Handler: handler.lambda_handler
+      Description: S3 이미지 Orphan 삭제
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          SAFETY_MARGIN_DAYS: !Ref SafetyMarginDays
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref BucketName
+        - S3WritePolicy:
+            BucketName: !Ref BucketName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObjectTagging
+                - s3:DeleteObject
+                - s3:ListBucket
+              Resource:
+                - !Sub 'arn:aws:s3:::${BucketName}'
+                - !Sub 'arn:aws:s3:::${BucketName}/*'
+      Events:
+        DailyCleanup:
+          Type: Schedule
+          Properties:
+            Schedule: 'cron(0 3 * * ? *)'  # 매일 오전 3시 (UTC)
+            Description: Daily image orphan cleanup schedule
+            Enabled: true
+
+  # CloudWatch Log Group
+  ImageOrphanCleanupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-image-orphan-cleanup-${Environment}'
+      RetentionInDays: 14
+
+Outputs:
+  ImageOrphanCleanupFunctionArn:
+    Description: Image Orphan Cleanup Function ARN
+    Value: !GetAtt ImageOrphanCleanupFunction.Arn
+    Export:
+      Name: !Sub '${ProjectName}-image-orphan-cleanup-function-arn-${Environment}'
+
+  ImageOrphanCleanupFunctionName:
+    Description: Image Orphan Cleanup Function Name
+    Value: !Ref ImageOrphanCleanupFunction
+    Export:
+      Name: !Sub '${ProjectName}-image-orphan-cleanup-function-name-${Environment}'
