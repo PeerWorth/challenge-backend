@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -20,6 +21,14 @@ from app.module.auth.error import AuthException
 from app.module.user.error import UserException
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_exception_handler(AuthException, custom_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(UserException, custom_exception_handler)  # type: ignore[arg-type]
