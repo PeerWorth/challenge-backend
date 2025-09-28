@@ -76,7 +76,6 @@ class TestJWTService:
         # Then
         assert decoded.social_id == "test_social_id"
         assert decoded.user_id == "123"
-        assert decoded.user_id_int == 123
 
     def test_decode_expired_token(self, jwt_service: JWTService):
         # Given

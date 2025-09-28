@@ -1,10 +1,15 @@
 import os
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 from alembic import context
+from app.common.enums import EnvironmentType
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import all models for autogenerate support
 from app.model import *
@@ -13,8 +18,12 @@ from app.model import *
 # access to the values within the .ini file in use.
 config = context.config
 
-# Set the database URL from environment variables
-database_url = f"mysql+pymysql://{os.getenv('DB_USER', 'root')}:{os.getenv('DB_PASSWORD', 'qwerasdf12')}@localhost/{os.getenv('DB_NAME', 'challenge')}"
+# Get environment type from environment variable
+environment = EnvironmentType(os.getenv("ENVIRONMENT", "dev"))
+
+# Set the database URL based on environment
+# Use pymysql for synchronous alembic migrations (not aiomysql)
+database_url = environment.db_url.replace("mysql+aiomysql", "mysql+pymysql")
 config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.

@@ -3,19 +3,28 @@ from sqlmodel import Field, Relationship
 from app.common.mixin.timestamp import TimestampMixin
 
 
+class ChallengeMission(TimestampMixin, table=True):  # type: ignore
+    __tablename__: str = "challenge_mission"
+
+    id: int = Field(default=None, primary_key=True)
+    challenge_id: int = Field(foreign_key="challenge.id", nullable=False)
+    mission_id: int = Field(foreign_key="mission.id", nullable=False)
+    step: int = Field(default=0, nullable=False, description="챌린지 내 미션 순서")
+
+
 class Challenge(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "challenge"
 
     id: int = Field(default=None, primary_key=True)
     title: str = Field(nullable=False, description="챌린지 제목")
-    step: int = Field(default=0, nullable=False, description="챌린지 순서")
+    description: str = Field(nullable=False, description="챌린지 설명")
+    goal: int = Field(default=1, nullable=False, description="챌린지 성공을 위한 최소 미션 완료 개수")
 
     missions: list["Mission"] = Relationship(
-        back_populates="challenge",
+        back_populates="challenges",
+        link_model=ChallengeMission,
         sa_relationship_kwargs={
-            "cascade": "all, delete-orphan",
-            "passive_deletes": True,
-            "order_by": "Mission.step",
+            "order_by": "ChallengeMission.step",
         },
     )
 
@@ -24,9 +33,15 @@ class Mission(TimestampMixin, table=True):  # type: ignore
     __tablename__: str = "mission"
 
     id: int = Field(default=None, primary_key=True)
-    challenge_id: int = Field(foreign_key="challenge.id", nullable=False)
     title: str = Field(nullable=False, description="미션 제목")
-    step: int = Field(default=0, nullable=False, description="미션 순서")
-    reward_amount: int = Field(default=0, nullable=False, description="성공 금액 (원)")
+    description: str = Field(nullable=False, description="미션 설명")
+    type: str = Field(nullable=False, description="미션 타입")
+    point: int = Field(default=0, nullable=False, description="성공 포인트")
 
-    challenge: Challenge = Relationship(back_populates="missions")
+    challenges: list["Challenge"] = Relationship(
+        back_populates="missions",
+        link_model=ChallengeMission,
+        sa_relationship_kwargs={
+            "order_by": "ChallengeMission.step",
+        },
+    )
