@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.challenge.v1.schema import ChallengeSummary, MissionSummary
+from app.model.user_challenge import UserChallenge
 from app.module.challenge.challenge_repository import (
     ChallengeRepository,
     MissionRepository,
@@ -27,52 +28,43 @@ class ChallengeService:
             return await self._build_initial_challenge_summary(session), True
 
     async def get_completed_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeSummary]:
-        completed_user_challenges = await self.user_challenge_repository.get_completed_challenges(session, user_id)
+        completed_user_challenges: list[UserChallenge] = await self.user_challenge_repository.get_completed_challenges(
+            session, user_id
+        )
 
         result = []
         for user_challenge in completed_user_challenges:
             challenge_summary = await self._build_challenge_summary_from_user_challenge(session, user_challenge)
-            if challenge_summary:
-                result.append(challenge_summary)
+            result.append(challenge_summary)
 
         return result
 
     async def _build_challenge_summary_from_user_challenge(
-        self, session: AsyncSession, user_challenge
+        self, session: AsyncSession, user_challenge: UserChallenge
     ) -> ChallengeSummary:
-        """UserChallenge로부터 ChallengeSummary 구성"""
-        # 챌린지와 관련 데이터 조회
         challenge, missions, challenge_missions = await self.challenge_repository.get_with_missions(
             session, user_challenge.challenge_id
         )
 
-        # get_with_missions에서 이미 데이터 존재 여부를 검증하므로 여기서는 불필요
-
-        # 유저의 미션 진행 상태 조회
         user_missions = await self.user_mission_repository.get_missions_by_user_challenge(session, user_challenge.id)
         user_mission_dict = {um.mission_id: um for um in user_missions}
 
-        # 미션 요약 정보 구성
-        mission_summaries = []
+        mission_summaries: list[MissionSummary] = []
         total_points = 0
         current_mission = None
 
         for cm in challenge_missions:
-            # 해당 미션 찾기
             mission = next((m for m in missions if m.id == cm.mission_id), None)
             if not mission:
                 continue
 
-            # 유저의 미션 상태 확인
             user_mission = user_mission_dict.get(mission.id)
             mission_status = user_mission.status if user_mission else MissionStatusType.NOT_STARTED
 
-            # 현재 진행 중인 미션 스텝 업데이트
+            participant_count = None
             if mission_status == MissionStatusType.IN_PROGRESS:
                 current_mission = cm.step
-
-            # 참여 인원 계산
-            participant_count = await self.mission_repository.count_participants(session, mission.id)
+                participant_count = await self.mission_repository.count_participants(session, mission.id)
 
             mission_summaries.append(
                 MissionSummary(
