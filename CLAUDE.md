@@ -163,7 +163,12 @@ cd infra && make remove-prod
 이 프로젝트에서 작업할 때는 다음 지침을 따르세요:
 1. **언어**: 모든 응답은 한국어로 작성합니다.
 2. **코드 스타일**: Black, isort 포맷터 규칙을 따릅니다 (line-length: 120).
-3. **타입 힌팅**: 가능한 모든 곳에 타입 힌팅을 사용합니다.
+3. **타입 힌팅**:
+   - 가능한 모든 곳에 타입 힌팅을 사용합니다.
+   - **IMPORTANT**: Python 3.11+ 내장 타입을 사용하고 `typing` 모듈은 사용하지 않습니다.
+   - ✅ 올바른 예시: `list[str]`, `dict[str, int]`, `tuple[str, ...]`
+   - ❌ 잘못된 예시: `typing.List[str]`, `typing.Dict[str, int]`, `typing.Tuple[str, ...]`
+   - 예외: `typing` 모듈에서만 제공되는 특수 타입 (예: `Protocol`, `TypeVar` 등)은 사용 가능
 4. **비동기 프로그래밍**: FastAPI와 SQLAlchemy는 모두 async/await 패턴을 사용합니다.
 5. **에러 처리**: 명확한 에러 메시지를 한국어로 제공합니다.
 6. **보안**: 환경 변수를 통해 민감한 정보를 관리합니다.
