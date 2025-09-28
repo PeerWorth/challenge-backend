@@ -26,4 +26,3 @@ class ChallengeSummary(CamelBaseModel):
 class HomePageResponse(CamelBaseModel):
     current_challenge: ChallengeSummary = Field(description="현재 수행 중인 챌린지")
     completed_challenges: list[ChallengeSummary] | None = Field(description="완료된 챌린지 목록")
-    initial: bool = Field(description="회원가입 이후 최초 진입")

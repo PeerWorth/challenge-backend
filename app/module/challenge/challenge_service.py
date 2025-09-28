@@ -21,13 +21,13 @@ class ChallengeService:
         self.user_challenge_repository = UserChallengeRepository()
         self.user_mission_repository = UserMissionRepository()
 
-    async def get_current_challenge(self, session: AsyncSession, user_id: int) -> tuple[ChallengeSummary, bool]:
+    async def get_current_challenge(self, session: AsyncSession, user_id: int) -> ChallengeSummary:
         current_user_challenge = await self.user_challenge_repository.get_current_challenge(session, user_id)
 
         if current_user_challenge:
-            return await self._build_challenge_summary_from_user_challenge(session, current_user_challenge), False
+            return await self._build_challenge_summary_from_user_challenge(session, current_user_challenge)
         else:
-            return await self._build_initial_challenge_summary(session), True
+            return await self._build_initial_challenge_summary(session)
 
     async def get_completed_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeSummary]:
         completed_user_challenges: list[UserChallenge] = await self.user_challenge_repository.get_completed_challenges(
