@@ -1,8 +1,9 @@
 from typing import Any, List, Optional, Type, TypeVar
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel
 
 T = TypeVar("T", bound=SQLModel)
@@ -76,6 +77,37 @@ class GenericRepository:
         result = await session.execute(stmt)
         await session.flush()
         return result.rowcount
+
+    async def find_with_relationship(
+        self, session: AsyncSession, relationship_name: str, filters: dict | None = None
+    ) -> List[T]:
+        """관계를 포함한 엔티티 조회"""
+        if not hasattr(self.model, relationship_name):
+            raise ValueError(f"모델 {self.model.__name__}에서 관계 '{relationship_name}'를 찾을 수 없습니다.")
+
+        relationship = getattr(self.model, relationship_name)
+        query = select(self.model).options(selectinload(relationship))
+
+        if filters:
+            query = query.filter_by(**filters)
+
+        result = await session.execute(query)
+        return list(result.scalars().all())  # type: ignore
+
+    async def count(self, session: AsyncSession, **filters) -> int:
+        """조건에 맞는 레코드 수 반환"""
+        query = select(func.count(self.model.id)).filter_by(**filters)
+        result = await session.execute(query)
+        return result.scalar() or 0
+
+    async def find_first(self, session: AsyncSession, order_by: str = "id", **filters) -> T | None:
+        if not hasattr(self.model, order_by):
+            raise ValueError(f"모델 {self.model.__name__}에서 필드 '{order_by}'를 찾을 수 없습니다.")
+
+        order_field = getattr(self.model, order_by)
+        query = select(self.model).filter_by(**filters).order_by(order_field).limit(1)
+        result = await session.execute(query)
+        return result.scalar_one_or_none()  # type: ignore
 
     async def upsert(
         self, session: AsyncSession, conflict_keys: List[str], return_instance: bool = False, **data: Any

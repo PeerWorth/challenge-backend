@@ -14,3 +14,9 @@ class MissionStatusType(StrEnum):
             return cls.IN_PROGRESS
         else:
             return cls.NOT_STARTED
+
+
+class ChallengeStatusType(StrEnum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
