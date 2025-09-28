@@ -77,12 +77,10 @@ class ChallengeService:
         )
 
     async def _build_initial_challenge_summary(self, session: AsyncSession) -> ChallengeSummary:
-        """초기 챌린지 요약 정보 구성 (신규 사용자)"""
         challenge, missions, challenge_missions = await self.challenge_repository.get_with_missions(
             session, FIRST_CHALLENGE_ID
         )
 
-        # 첫 번째 미션의 참여자 수만 계산
         first_mission_participant_count = None
         if challenge_missions:
             first_challenge_mission = next((cm for cm in challenge_missions if cm.step == 1), None)
