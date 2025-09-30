@@ -23,12 +23,12 @@ class ChallengeSerializer:
         for cm in challenge_missions:
             mission = next((m for m in missions if m.id == cm.mission_id), None)
             if not mission:
-                raise ValueError("연동 된 미션 id {cm.mission_id}을 찾는데 실패 했습니다.")
+                raise ValueError(f"연동 된 미션 id {cm.mission_id}을 찾는데 실패 했습니다.")
 
             user_mission: UserMission | None = user_mission_dict.get(mission.id, None)
 
             if user_mission is None:
-                raise ValueError("유저 미션 id {mission.id}가 존재하지 않습니다.")
+                raise ValueError(f"유저 미션 id {mission.id}가 존재하지 않습니다.")
 
             # 현재 미션 step 할당
             if user_mission.status == MissionStatusType.IN_PROGRESS:

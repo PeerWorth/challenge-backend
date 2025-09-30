@@ -11,7 +11,7 @@ challenge_router = APIRouter(prefix="/v1")
 
 
 @challenge_router.get(
-    "/",
+    "/homepage",
     summary="유저의 홈 화면 정보를 반환합니다.",
     description="홈 화면 이동 시 처음 표시 될 정보를 반환합니다.",
     status_code=status.HTTP_200_OK,

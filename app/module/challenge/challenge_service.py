@@ -119,10 +119,6 @@ class ChallengeService:
         if not challenge_missions:
             raise MissionDataIncompleteError(challenge_id)
 
-        first_mission = next((cm for cm in challenge_missions if cm.step == FIRST_MISSION_STEP), None)
-        if not first_mission:
-            raise MissionDataIncompleteError(challenge_id)
-
-        await self.user_challenge_repository.create_with_first_mission(
-            session, user_id, challenge_id, first_mission.mission_id
+        await self.user_challenge_repository.create_with_missions(
+            session, user_id, challenge_id, challenge_missions, FIRST_MISSION_STEP
         )
