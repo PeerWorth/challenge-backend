@@ -1,4 +1,4 @@
-from typing import Optional
+from datetime import datetime
 
 from sqlmodel import Field, Relationship, UniqueConstraint
 
@@ -31,8 +31,9 @@ class UserMission(TimestampMixin, table=True):  # type: ignore
     id: int = Field(default=None, primary_key=True)
     user_challenge_id: int = Field(foreign_key="user_challenge.id", nullable=False)
     mission_id: int = Field(foreign_key="mission.id", nullable=False)
-    post_id: Optional[int] = Field(foreign_key="post.id", nullable=True, description="미션 수행 포스트")
+    post_id: int | None = Field(default=None, foreign_key="post.id", nullable=True, description="미션 수행 포스트")
     status: str = Field(default="not_started", nullable=False, description="미션 상태")
     point: int = Field(default=0, nullable=False, description="획득한 보상 금액")
+    completed_at: datetime | None = Field(default=None, nullable=True, description="미션 완료 시간 (UTC)")
 
     user_challenge: UserChallenge = Relationship(back_populates="missions")
