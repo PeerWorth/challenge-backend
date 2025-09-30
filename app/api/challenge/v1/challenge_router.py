@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.challenge.v1.schema import ChallengeInfoResponse, NewChallengeRequest, NewChallengeResponse
+from app.api.challenge.v1.schema import (
+    ChallengeInfoResponse,
+    ChallengeListResponse,
+    NewChallengeRequest,
+    NewChallengeResponse,
+)
 from app.database.dependency import get_db_session
 from app.module.auth.dependency import verify_access_token
 from app.module.auth.schemas import JWTPayload
@@ -26,6 +31,22 @@ async def get_user_challenge_info(
     completed_challenges = await challenge_service.get_completed_challenges(session, payload.user_id_int)
 
     return ChallengeInfoResponse(current_challenge=current_challenge, completed_challenges=completed_challenges)
+
+
+@challenge_router.get(
+    "/",
+    summary="챌린지 목록을 반환합니다.",
+    description="유저가 선택할 수 있는 모든 챌린지 정보를 반환합니다.",
+    status_code=status.HTTP_200_OK,
+    response_model=ChallengeListResponse,
+)
+async def get_challenges_missions(
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    challenge_service: ChallengeService = Depends(),
+) -> ChallengeListResponse:
+    challenges = await challenge_service.get_all_challenges(session)
+    return ChallengeListResponse(challenges=challenges)
 
 
 @challenge_router.post(

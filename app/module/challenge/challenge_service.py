@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.challenge.v1.schema import ChallengeSummary
+from app.api.challenge.v1.schema import ChallengeDetail, ChallengeSummary
 from app.model.challenge import Challenge, ChallengeMission, Mission
 from app.model.user_challenge import UserChallenge, UserMission
 from app.module.challenge.challenge_repository import (
@@ -122,3 +122,32 @@ class ChallengeService:
         await self.user_challenge_repository.create_with_missions(
             session, user_id, challenge_id, challenge_missions, FIRST_MISSION_STEP
         )
+
+    async def get_all_challenges(self, session: AsyncSession) -> list[ChallengeDetail]:
+        challenges: list[Challenge] = await self.challenge_repository.find_all(session)
+
+        if not challenges:
+            return []
+
+        challenge_ids = [c.id for c in challenges]
+        challenges_with_missions = await self.challenge_repository.get_multiple_with_missions(session, challenge_ids)
+
+        result = []
+        for challenge in challenges:
+            challenge_data = challenges_with_missions.get(challenge.id)
+            if not challenge_data:
+                continue
+
+            _, missions, _ = challenge_data
+            total_points = sum(mission.point for mission in missions)
+
+            result.append(
+                ChallengeDetail(
+                    id=challenge.id,
+                    title=challenge.title,
+                    description=challenge.description,
+                    total_points=total_points,
+                )
+            )
+
+        return result
