@@ -114,25 +114,32 @@ class UserChallengeRepository(GenericRepository):
     async def get_completed_challenges(self, session: AsyncSession, user_id: int) -> list[UserChallenge]:
         return await self.find_all(session, user_id=user_id, status=ChallengeStatusType.COMPLETED)
 
-    async def create_with_first_mission(
-        self, session: AsyncSession, user_id: int, challenge_id: int, first_mission_id: int
+    async def create_with_missions(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        challenge_id: int,
+        challenge_missions: list[ChallengeMission],
+        initial_step: int,
     ) -> UserChallenge:
         user_challenge = await self.create(
             session,
             user_id=user_id,
             challenge_id=challenge_id,
             status=ChallengeStatusType.IN_PROGRESS,
-            mission_step=1,
+            mission_step=initial_step,
         )
 
         user_mission_repo = UserMissionRepository()
-        await user_mission_repo.create(
-            session,
-            user_challenge_id=user_challenge.id,
-            mission_id=first_mission_id,
-            status=MissionStatusType.IN_PROGRESS,
-            point=0,
-        )
+        for cm in challenge_missions:
+            status = MissionStatusType.IN_PROGRESS if cm.step == initial_step else MissionStatusType.NOT_STARTED
+            await user_mission_repo.create(
+                session,
+                user_challenge_id=user_challenge.id,
+                mission_id=cm.mission_id,
+                status=status,
+                point=0,
+            )
 
         await session.commit()
         await session.refresh(user_challenge)

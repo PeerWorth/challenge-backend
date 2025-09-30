@@ -34,3 +34,14 @@ class NewChallengeRequest(CamelBaseModel):
 
 class NewChallengeResponse(CamelBaseModel):
     status_code: int = Field(description="상태 코드")
+
+
+class ChallengeDetail(CamelBaseModel):
+    id: int = Field(description="챌린지 ID")
+    title: str = Field(description="챌린지 제목")
+    description: str = Field(description="챌린지 설명")
+    total_points: int = Field(description="총 보상 금액")
+
+
+class ChallengeListResponse(CamelBaseModel):
+    challenges: list[ChallengeDetail] = Field(description="챌린지 목록")
