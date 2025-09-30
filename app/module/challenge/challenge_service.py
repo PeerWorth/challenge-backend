@@ -9,7 +9,6 @@ from app.module.challenge.challenge_repository import (
     UserChallengeRepository,
     UserMissionRepository,
 )
-from app.module.challenge.constants import FIRST_CHALLENGE_ID
 from app.module.challenge.enums import MissionStatusType
 from app.module.challenge.errors import ChallengeNotFoundError
 from app.module.challenge.serializers import ChallengeSerializer
@@ -22,13 +21,13 @@ class ChallengeService:
         self.user_challenge_repository = UserChallengeRepository()
         self.user_mission_repository = UserMissionRepository()
 
-    async def get_current_challenge(self, session: AsyncSession, user_id: int) -> ChallengeSummary:
+    async def get_current_challenge(self, session: AsyncSession, user_id: int) -> ChallengeSummary | None:
         current_user_challenge: UserChallenge | None = await self.user_challenge_repository.get_current_challenge(
             session, user_id
         )
 
         if not current_user_challenge:
-            current_user_challenge = await self._create_initial_user_challenge(session, user_id)
+            return None
 
         challenge_id = current_user_challenge.challenge_id
         challenge = await self.challenge_repository.get_by_id(session, challenge_id)  # type: ignore
@@ -48,13 +47,13 @@ class ChallengeService:
             challenge, missions, challenge_missions, current_user_challenge, user_missions, participant_counts
         )
 
-    async def get_completed_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeSummary]:
+    async def get_completed_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeSummary] | None:
         completed_user_challenges: list[UserChallenge] = await self.user_challenge_repository.get_completed_challenges(
             session, user_id
         )
 
         if not completed_user_challenges:
-            return []
+            return None
 
         challenge_ids = [uc.challenge_id for uc in completed_user_challenges]
         challenges_infos: dict[int, tuple[Challenge, list[Mission], list[ChallengeMission]]] = (
@@ -68,12 +67,14 @@ class ChallengeService:
 
         result = []
         for user_challenge in completed_user_challenges:
-            challenge_data = challenges_infos.get(user_challenge.challenge_id)
+            challenge_data = challenges_infos.get(user_challenge.challenge_id, None)
             if not challenge_data:
-                continue
+                raise ValueError(f"챌린지 id {user_challenge.challenge_id}의 데이터가 존재하지 않습니다.")
 
             challenge, missions, challenge_missions = challenge_data
-            user_missions = all_user_missions.get(user_challenge.id, [])
+            user_missions = all_user_missions.get(user_challenge.id, None)
+            if not user_missions:
+                raise ValueError(f"user_challenge id {user_challenge.id}의 데이터가 존재하지 않습니다.")
 
             challenge_summary = ChallengeSerializer.to_challenge_summary(
                 challenge, missions, challenge_missions, user_challenge, user_missions, None
@@ -85,6 +86,9 @@ class ChallengeService:
     async def _get_participant_counts_for_in_progress_missions(
         self, session: AsyncSession, user_missions: list[UserMission]
     ) -> dict[int, int]:
+        """
+        NOTE: 비즈니스 규칙상 IN_PROGRESS 미션은 항상 1개만 존재하므로 N+1 이슈 발생하지 않음
+        """
         in_progress_missions = [um for um in user_missions if um.status == MissionStatusType.IN_PROGRESS]
 
         if not in_progress_missions:
@@ -96,17 +100,3 @@ class ChallengeService:
             participant_counts[user_mission.mission_id] = count
 
         return participant_counts
-
-    async def _create_initial_user_challenge(self, session: AsyncSession, user_id: int) -> UserChallenge:
-        challenge_missions = await self.challenge_repository.get_challenge_missions(session, FIRST_CHALLENGE_ID)
-
-        if not challenge_missions:
-            raise ChallengeNotFoundError(FIRST_CHALLENGE_ID)
-
-        first_challenge_mission = next((cm for cm in challenge_missions if cm.step == 1), None)
-        if not first_challenge_mission:
-            raise ChallengeNotFoundError(FIRST_CHALLENGE_ID)
-
-        return await self.user_challenge_repository.create_with_first_mission(
-            session, user_id, FIRST_CHALLENGE_ID, first_challenge_mission.mission_id
-        )
