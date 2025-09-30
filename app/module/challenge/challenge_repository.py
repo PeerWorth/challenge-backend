@@ -12,19 +12,19 @@ class ChallengeRepository(GenericRepository):
     def __init__(self):
         super().__init__(Challenge)
 
-    async def get_with_missions(
-        self, session: AsyncSession, challenge_id: int
-    ) -> tuple[Challenge, list[Mission], list[ChallengeMission]]:
-        challenge = await self.get_by_id(session, challenge_id)  # type: ignore
-        if not challenge:
-            raise ChallengeNotFoundError(challenge_id)
-
+    async def get_missions_by_challenge(self, session: AsyncSession, challenge_id: int) -> list[Mission]:
         missions_stmt = (
             select(Mission).join(ChallengeMission).where(ChallengeMission.challenge_id == challenge_id)  # type: ignore
-        )  # type: ignore
+        )
         missions_result = await session.execute(missions_stmt)
         missions = list(missions_result.scalars().all())
 
+        if not missions:
+            raise MissionDataIncompleteError(challenge_id)
+
+        return missions
+
+    async def get_challenge_missions(self, session: AsyncSession, challenge_id: int) -> list[ChallengeMission]:
         cm_stmt = (
             select(ChallengeMission)
             .where(ChallengeMission.challenge_id == challenge_id)  # type: ignore
@@ -33,8 +33,20 @@ class ChallengeRepository(GenericRepository):
         cm_result = await session.execute(cm_stmt)
         challenge_missions = list(cm_result.scalars().all())
 
-        if not missions or not challenge_missions:
+        if not challenge_missions:
             raise MissionDataIncompleteError(challenge_id)
+
+        return challenge_missions
+
+    async def get_with_missions(
+        self, session: AsyncSession, challenge_id: int
+    ) -> tuple[Challenge, list[Mission], list[ChallengeMission]]:
+        challenge = await self.get_by_id(session, challenge_id)  # type: ignore
+        if not challenge:
+            raise ChallengeNotFoundError(challenge_id)
+
+        missions = await self.get_missions_by_challenge(session, challenge_id)
+        challenge_missions = await self.get_challenge_missions(session, challenge_id)
 
         return challenge, missions, challenge_missions
 
@@ -111,3 +123,22 @@ class UserMissionRepository(GenericRepository):
 
     async def get_missions_by_user_challenge(self, session: AsyncSession, user_challenge_id: int) -> list[UserMission]:
         return await self.find_all(session, user_challenge_id=user_challenge_id)
+
+    async def get_missions_by_user_challenges_batch(
+        self, session: AsyncSession, user_challenge_ids: list[int]
+    ) -> dict[int, list[UserMission]]:
+        """여러 유저 챌린지의 미션 데이터를 배치로 조회"""
+        if not user_challenge_ids:
+            return {}
+
+        stmt = select(UserMission).where(UserMission.user_challenge_id.in_(user_challenge_ids))  # type: ignore
+        result = await session.execute(stmt)
+        all_user_missions = result.scalars().all()
+
+        grouped: dict[int, list[UserMission]] = {}
+        for um in all_user_missions:
+            if um.user_challenge_id not in grouped:
+                grouped[um.user_challenge_id] = []
+            grouped[um.user_challenge_id].append(um)
+
+        return grouped

@@ -172,3 +172,20 @@ cd infra && make remove-prod
 4. **비동기 프로그래밍**: FastAPI와 SQLAlchemy는 모두 async/await 패턴을 사용합니다.
 5. **에러 처리**: 명확한 에러 메시지를 한국어로 제공합니다.
 6. **보안**: 환경 변수를 통해 민감한 정보를 관리합니다.
+7. **Import 규칙**:
+   - 모든 import 문은 파일 최상단에 위치합니다.
+   - 함수/메소드 내부에서 import 하지 않습니다.
+8. **주석 규칙**:
+   - 불필요한 주석은 작성하지 않습니다.
+   - 코드 자체가 명확하면 주석을 생략합니다.
+   - Docstring은 복잡한 비즈니스 로직이나 public API에만 작성합니다.
+9. **시간 처리 규칙** (`app/common/utils/time.py` 참조):
+   - **IMPORTANT**: DB에 저장되는 모든 datetime은 UTC로 통일합니다.
+   - 사용자에게 표시되는 모든 시간은 KST(한국 시간) 기준입니다.
+   - 시간 변환 시 반드시 `TimeConverter` 클래스 또는 헬퍼 함수를 사용합니다:
+     - `utc_now()`: 현재 UTC 시간 (DB 저장용)
+     - `kst_now()`: 현재 KST 시간 (비즈니스 로직용)
+     - `to_utc(dt)`: KST → UTC 변환 (DB 저장 전)
+     - `to_kst(dt)`: UTC → KST 변환 (DB 조회 후)
+   - 날짜 비교 시 항상 timezone을 고려합니다.
+   - **절대 naive datetime을 사용하지 않습니다** (tzinfo 없는 datetime).

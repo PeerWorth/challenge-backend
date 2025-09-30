@@ -11,6 +11,7 @@ from app.module.challenge.challenge_repository import (
 )
 from app.module.challenge.constants import FIRST_CHALLENGE_ID
 from app.module.challenge.enums import MissionStatusType
+from app.module.challenge.errors import ChallengeNotFoundError
 from app.module.challenge.serializers import ChallengeSerializer
 
 
@@ -22,12 +23,42 @@ class ChallengeService:
         self.user_mission_repository = UserMissionRepository()
 
     async def get_current_challenge(self, session: AsyncSession, user_id: int) -> ChallengeSummary:
-        current_user_challenge = await self.user_challenge_repository.get_current_challenge(session, user_id)
+        current_user_challenge: UserChallenge | None = await self.user_challenge_repository.get_current_challenge(
+            session, user_id
+        )
 
         if current_user_challenge:
-            return await self._build_challenge_summary_from_user_challenge(session, current_user_challenge)
+            challenge_id = current_user_challenge.challenge_id
+            challenge = await self.challenge_repository.get_by_id(session, challenge_id)  # type: ignore
+            if not challenge:
+                raise ChallengeNotFoundError(challenge_id)
+
+            missions: list[Mission] = await self.challenge_repository.get_missions_by_challenge(session, challenge_id)
+            challenge_missions: list[ChallengeMission] = await self.challenge_repository.get_challenge_missions(
+                session, challenge_id
+            )
+            user_missions: list[UserMission] = await self.user_mission_repository.get_missions_by_user_challenge(
+                session, current_user_challenge.id
+            )
+            participant_counts = await self._get_participant_counts_for_in_progress_missions(session, user_missions)
+
+            return ChallengeSerializer.to_challenge_summary_for_current(
+                challenge, missions, challenge_missions, current_user_challenge, user_missions, participant_counts
+            )
         else:
-            return await self._build_initial_challenge_summary(session)
+            challenge = await self.challenge_repository.get_by_id(session, FIRST_CHALLENGE_ID)  # type: ignore
+            if not challenge:
+                raise ChallengeNotFoundError(FIRST_CHALLENGE_ID)
+
+            missions = await self.challenge_repository.get_missions_by_challenge(session, FIRST_CHALLENGE_ID)
+            challenge_missions = await self.challenge_repository.get_challenge_missions(session, FIRST_CHALLENGE_ID)
+            first_mission_participant_count = await self._get_first_mission_participant_count(
+                session, missions, challenge_missions
+            )
+
+            return ChallengeSerializer.to_initial_challenge_summary(
+                challenge, missions, challenge_missions, first_mission_participant_count
+            )
 
     async def get_completed_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeSummary]:
         completed_user_challenges: list[UserChallenge] = await self.user_challenge_repository.get_completed_challenges(
@@ -43,7 +74,9 @@ class ChallengeService:
         )
 
         user_challenge_ids = [uc.id for uc in completed_user_challenges]
-        all_user_missions = await self._get_user_missions_batch(session, user_challenge_ids)
+        all_user_missions = await self.user_mission_repository.get_missions_by_user_challenges_batch(
+            session, user_challenge_ids
+        )
 
         result = []
         for user_challenge in completed_user_challenges:
@@ -61,73 +94,38 @@ class ChallengeService:
 
         return result
 
-    async def _build_challenge_summary_from_user_challenge(
-        self, session: AsyncSession, user_challenge: UserChallenge
-    ) -> ChallengeSummary:
-        challenge, missions, challenge_missions = await self.challenge_repository.get_with_missions(
-            session, user_challenge.challenge_id
-        )
+    async def _get_first_mission_participant_count(
+        self, session: AsyncSession, missions: list[Mission], challenge_missions: list[ChallengeMission]
+    ) -> int | None:
+        first_mission = self._find_first_mission(missions, challenge_missions)
+        if not first_mission:
+            return None
 
-        user_missions = await self.user_mission_repository.get_missions_by_user_challenge(session, user_challenge.id)
-
-        participant_counts = await self._get_participant_counts_for_in_progress_missions(session, user_missions)
-
-        return ChallengeSerializer.to_challenge_summary_for_current(
-            challenge, missions, challenge_missions, user_challenge, user_missions, participant_counts
-        )
-
-    async def _build_initial_challenge_summary(self, session: AsyncSession) -> ChallengeSummary:
-        challenge, missions, challenge_missions = await self.challenge_repository.get_with_missions(
-            session, FIRST_CHALLENGE_ID
-        )
-
-        first_mission_participant_count = None
-        if challenge_missions:
-            first_challenge_mission = next((cm for cm in challenge_missions if cm.step == 1), None)
-            if first_challenge_mission:
-                first_mission = next((m for m in missions if m.id == first_challenge_mission.mission_id), None)
-                if first_mission:
-                    first_mission_participant_count = await self.mission_repository.count_participants(
-                        session, first_mission.id
-                    )
-
-        return ChallengeSerializer.to_initial_challenge_summary(
-            challenge, missions, challenge_missions, first_mission_participant_count
-        )
-
-    async def _get_user_missions_batch(
-        self, session: AsyncSession, user_challenge_ids: list[int]
-    ) -> dict[int, list[UserMission]]:
-        """여러 유저 챌린지의 미션 데이터를 배치로 조회"""
-        if not user_challenge_ids:
-            return {}
-
-        from sqlalchemy import select
-
-        stmt = select(UserMission).where(UserMission.user_challenge_id.in_(user_challenge_ids))  # type: ignore
-        result = await session.execute(stmt)
-        all_user_missions = result.scalars().all()
-
-        grouped: dict = {}
-        for um in all_user_missions:
-            if um.user_challenge_id not in grouped:
-                grouped[um.user_challenge_id] = []
-            grouped[um.user_challenge_id].append(um)
-
-        return grouped
+        return await self.mission_repository.count_participants(session, first_mission.id)
 
     async def _get_participant_counts_for_in_progress_missions(
         self, session: AsyncSession, user_missions: list[UserMission]
     ) -> dict[int, int]:
-        """진행 중인 미션들의 참여자 수 배치 조회"""
-        in_progress_mission_ids = [um.mission_id for um in user_missions if um.status == MissionStatusType.IN_PROGRESS]
+        in_progress_missions = [um for um in user_missions if um.status == MissionStatusType.IN_PROGRESS]
 
-        if not in_progress_mission_ids:
+        if not in_progress_missions:
             return {}
 
         participant_counts = {}
-        for mission_id in in_progress_mission_ids:
-            count = await self.mission_repository.count_participants(session, mission_id)
-            participant_counts[mission_id] = count
+        for user_mission in in_progress_missions:
+            count = await self.mission_repository.count_participants(session, user_mission.mission_id)
+            participant_counts[user_mission.mission_id] = count
 
         return participant_counts
+
+    def _find_first_mission(
+        self, missions: list[Mission], challenge_missions: list[ChallengeMission]
+    ) -> Mission | None:
+        if not challenge_missions:
+            return None
+
+        first_challenge_mission = next((cm for cm in challenge_missions if cm.step == 1), None)
+        if not first_challenge_mission:
+            return None
+
+        return next((m for m in missions if m.id == first_challenge_mission.mission_id), None)

@@ -122,7 +122,6 @@ class ChallengeSerializer:
             if not mission:
                 continue
 
-            # 첫 번째 미션(step=1)에만 참여 인원 수 할당
             participant_count = None
             if cm.step == 1:
                 participant_count = first_mission_participant_count

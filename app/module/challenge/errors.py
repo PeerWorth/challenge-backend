@@ -10,8 +10,6 @@ class ChallengeError(Exception):
 
 
 class ChallengeNotFoundError(ChallengeError):
-    """챌린지를 찾을 수 없는 경우"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
 
     def __init__(self, challenge_id: int):
@@ -20,8 +18,6 @@ class ChallengeNotFoundError(ChallengeError):
 
 
 class MissionDataIncompleteError(ChallengeError):
-    """미션 데이터가 불완전한 경우"""
-
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(self, challenge_id: int):
@@ -30,8 +26,6 @@ class MissionDataIncompleteError(ChallengeError):
 
 
 class MissionNotFoundError(ChallengeError):
-    """미션을 찾을 수 없는 경우"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
 
     def __init__(self, mission_id: int):
@@ -40,8 +34,6 @@ class MissionNotFoundError(ChallengeError):
 
 
 class UserChallengeNotFoundError(ChallengeError):
-    """사용자 챌린지를 찾을 수 없는 경우"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
 
     def __init__(self, user_id: int, challenge_id: int):
