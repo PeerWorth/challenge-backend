@@ -40,3 +40,11 @@ class UserChallengeNotFoundError(ChallengeError):
         self.user_id = user_id
         self.challenge_id = challenge_id
         super().__init__(f"사용자 {user_id}의 챌린지 {challenge_id} 데이터를 찾을 수 없습니다.")
+
+
+class UserChallengeAlreadyInProgressError(ChallengeError):
+    status_code: int = status.HTTP_409_CONFLICT
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+        super().__init__(f"사용자 {user_id}는 이미 진행 중인 챌린지가 있습니다.")

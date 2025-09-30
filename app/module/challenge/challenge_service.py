@@ -9,8 +9,13 @@ from app.module.challenge.challenge_repository import (
     UserChallengeRepository,
     UserMissionRepository,
 )
+from app.module.challenge.constants import FIRST_MISSION_STEP
 from app.module.challenge.enums import MissionStatusType
-from app.module.challenge.errors import ChallengeNotFoundError
+from app.module.challenge.errors import (
+    ChallengeNotFoundError,
+    MissionDataIncompleteError,
+    UserChallengeAlreadyInProgressError,
+)
 from app.module.challenge.serializers import ChallengeSerializer
 
 
@@ -100,3 +105,24 @@ class ChallengeService:
             participant_counts[user_mission.mission_id] = count
 
         return participant_counts
+
+    async def start_new_challenge(self, session: AsyncSession, challenge_id: int, user_id: int) -> None:
+        current_user_challenge = await self.user_challenge_repository.get_current_challenge(session, user_id)
+        if current_user_challenge:
+            raise UserChallengeAlreadyInProgressError(user_id)
+
+        challenge = await self.challenge_repository.get_by_id(session, challenge_id)  # type: ignore
+        if not challenge:
+            raise ChallengeNotFoundError(challenge_id)
+
+        challenge_missions = await self.challenge_repository.get_challenge_missions(session, challenge_id)
+        if not challenge_missions:
+            raise MissionDataIncompleteError(challenge_id)
+
+        first_mission = next((cm for cm in challenge_missions if cm.step == FIRST_MISSION_STEP), None)
+        if not first_mission:
+            raise MissionDataIncompleteError(challenge_id)
+
+        await self.user_challenge_repository.create_with_first_mission(
+            session, user_id, challenge_id, first_mission.mission_id
+        )
