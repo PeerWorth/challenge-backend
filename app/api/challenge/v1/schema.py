@@ -23,6 +23,14 @@ class ChallengeSummary(CamelBaseModel):
     total_points: int = Field(description="총 금액")
 
 
-class HomePageResponse(CamelBaseModel):
-    current_challenge: ChallengeSummary = Field(description="현재 수행 중인 챌린지")
+class ChallengeInfoResponse(CamelBaseModel):
+    current_challenge: ChallengeSummary | None = Field(description="현재 수행 중인 챌린지")
     completed_challenges: list[ChallengeSummary] | None = Field(description="완료된 챌린지 목록")
+
+
+class NewChallengeRequest(CamelBaseModel):
+    challenge_id: int = Field(description="챌린지 ID")
+
+
+class NewChallengeResponse(CamelBaseModel):
+    status_code: int = Field(description="상태 코드")

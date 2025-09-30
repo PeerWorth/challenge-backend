@@ -10,8 +10,6 @@ class ChallengeError(Exception):
 
 
 class ChallengeNotFoundError(ChallengeError):
-    """챌린지를 찾을 수 없는 경우"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
 
     def __init__(self, challenge_id: int):
@@ -20,8 +18,6 @@ class ChallengeNotFoundError(ChallengeError):
 
 
 class MissionDataIncompleteError(ChallengeError):
-    """미션 데이터가 불완전한 경우"""
-
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     def __init__(self, challenge_id: int):
@@ -30,8 +26,6 @@ class MissionDataIncompleteError(ChallengeError):
 
 
 class MissionNotFoundError(ChallengeError):
-    """미션을 찾을 수 없는 경우"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
 
     def __init__(self, mission_id: int):
@@ -40,11 +34,17 @@ class MissionNotFoundError(ChallengeError):
 
 
 class UserChallengeNotFoundError(ChallengeError):
-    """사용자 챌린지를 찾을 수 없는 경우"""
-
     status_code: int = status.HTTP_404_NOT_FOUND
 
     def __init__(self, user_id: int, challenge_id: int):
         self.user_id = user_id
         self.challenge_id = challenge_id
         super().__init__(f"사용자 {user_id}의 챌린지 {challenge_id} 데이터를 찾을 수 없습니다.")
+
+
+class UserChallengeAlreadyInProgressError(ChallengeError):
+    status_code: int = status.HTTP_409_CONFLICT
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+        super().__init__(f"사용자 {user_id}는 이미 진행 중인 챌린지가 있습니다.")

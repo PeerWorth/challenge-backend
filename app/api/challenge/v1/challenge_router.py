@@ -1,0 +1,48 @@
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.challenge.v1.schema import ChallengeInfoResponse, NewChallengeRequest, NewChallengeResponse
+from app.database.dependency import get_db_session
+from app.module.auth.dependency import verify_access_token
+from app.module.auth.schemas import JWTPayload
+from app.module.challenge.challenge_service import ChallengeService
+
+challenge_router = APIRouter(prefix="/v1")
+
+
+@challenge_router.get(
+    "/",
+    summary="유저의 홈 화면 정보를 반환합니다.",
+    description="홈 화면 이동 시 처음 표시 될 정보를 반환합니다.",
+    status_code=status.HTTP_200_OK,
+    response_model=ChallengeInfoResponse,
+)
+async def get_user_challenge_info(
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    challenge_service: ChallengeService = Depends(),
+) -> ChallengeInfoResponse:
+    current_challenge = await challenge_service.get_current_challenge(session, payload.user_id_int)
+    completed_challenges = await challenge_service.get_completed_challenges(session, payload.user_id_int)
+
+    return ChallengeInfoResponse(current_challenge=current_challenge, completed_challenges=completed_challenges)
+
+
+@challenge_router.post(
+    "/",
+    summary="챌린지 수행 요청",
+    description="다음 수행 할 챌린지를 요청합니다.",
+    status_code=status.HTTP_201_CREATED,
+    response_model=NewChallengeResponse,
+)
+async def create_user_challenge(
+    request_data: NewChallengeRequest,
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    challenge_service: ChallengeService = Depends(),
+) -> NewChallengeResponse:
+    challenge_id = request_data.challenge_id
+
+    await challenge_service.start_new_challenge(session, challenge_id, payload.user_id_int)
+
+    return NewChallengeResponse(status_code=status.HTTP_201_CREATED)

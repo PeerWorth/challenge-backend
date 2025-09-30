@@ -9,7 +9,7 @@ class ChallengeMission(TimestampMixin, table=True):  # type: ignore
     id: int = Field(default=None, primary_key=True)
     challenge_id: int = Field(foreign_key="challenge.id", nullable=False)
     mission_id: int = Field(foreign_key="mission.id", nullable=False)
-    step: int = Field(default=0, nullable=False, description="챌린지 내 미션 순서")
+    step: int = Field(default=1, nullable=False, description="챌린지 내 미션 순서")
 
 
 class Challenge(TimestampMixin, table=True):  # type: ignore

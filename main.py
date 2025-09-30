@@ -5,11 +5,11 @@ from mangum import Mangum
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.auth.v1.router import auth_router
-from app.api.challenge.v1.router import challenge_router
-from app.api.media.v1.router import media_router
-from app.api.post.v1.router import post_router
-from app.api.user.v1.router import user_router
+from app.api.auth.v1.auth_router import auth_router
+from app.api.challenge.v1.challenge_router import challenge_router
+from app.api.media.v1.media_router import media_router
+from app.api.post.v1.post_router import post_router
+from app.api.user.v1.user_router import user_router
 from app.common.exception_handlers import (
     custom_exception_handler,
     general_exception_handler,
