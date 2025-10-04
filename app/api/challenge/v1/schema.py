@@ -48,10 +48,16 @@ class ChallengeListResponse(CamelBaseModel):
     challenges: list[ChallengeDetail] = Field(description="챌린지 목록")
 
 
+class MissionPost(CamelBaseModel):
+    user_id: int = Field(description="유저 ID")
+    nickname: str = Field(description="닉네임")
+    image_url: str = Field(description="이미지 URL (Presigned URL)")
+
+
 class MissionInfoResponse(CamelBaseModel):
     id: int = Field(description="미션 ID")
     title: str = Field(description="미션 제목")
     description: str = Field(description="미션 설명")
     type: str = Field(description="미션 타입")
     point: int = Field(description="보상 포인트")
-    status: str = Field(description="유저 미션 상태")
+    posts: list[MissionPost] = Field(description="미션 관련 게시물 목록 (최신 6개)")

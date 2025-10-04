@@ -17,6 +17,7 @@ from app.module.challenge.errors import (
     UserChallengeAlreadyInProgressError,
 )
 from app.module.challenge.serializers import ChallengeSerializer
+from app.module.post.post_service import PostService
 
 
 class ChallengeService:
@@ -25,6 +26,8 @@ class ChallengeService:
         self.mission_repository = MissionRepository()
         self.user_challenge_repository = UserChallengeRepository()
         self.user_mission_repository = UserMissionRepository()
+
+        self.post_service = PostService()
 
     async def get_current_challenge(self, session: AsyncSession, user_id: int) -> ChallengeSummary | None:
         current_user_challenge: UserChallenge | None = await self.user_challenge_repository.get_current_challenge(
@@ -163,18 +166,7 @@ class ChallengeService:
         if not mission:
             raise ValueError(f"미션 id {mission_id}가 존재하지 않습니다.")
 
-        user_missions: list[UserMission] = await self.user_mission_repository.find_all(session, mission_id=mission_id)
-
-        user_mission = None
-        for um in user_missions:
-            user_challenge: UserChallenge | None = await self.user_challenge_repository.get_by_id(  # type: ignore
-                session, um.user_challenge_id
-            )
-            if user_challenge and user_challenge.user_id == user_id:
-                user_mission = um
-                break
-
-        status = user_mission.status if user_mission else MissionStatusType.NOT_STARTED
+        mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id)
 
         return MissionInfoResponse(
             id=mission.id,
@@ -182,5 +174,5 @@ class ChallengeService:
             description=mission.description,
             type=mission.type,
             point=mission.point,
-            status=status,
+            posts=mission_posts,
         )

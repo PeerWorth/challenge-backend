@@ -1,16 +1,22 @@
+import asyncio
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.challenge.v1.schema import MissionPost
 from app.api.post.v1.schema import PostRequest
 from app.database.generic_repository import GenericRepository
 from app.model.post import Post, PostImage
+from app.model.user import User
 from app.module.media.enums import UploadType
 from app.module.media.media_service import MediaService
+from app.module.post.post_repository import PostRepository
 
 
 class PostService:
     def __init__(self):
         self.post_repository = GenericRepository(Post)
         self.post_image_repository = GenericRepository(PostImage)
+        self.post_query_repository = PostRepository()
         self.media_service = MediaService()
 
     async def add_post(
@@ -33,7 +39,29 @@ class PostService:
             upload_type = UploadType.from_file_key(post_request.image_key)
             await self.post_image_repository.create(
                 session,
-                post_id=post.id,
+                post_id=post.id,  # type: ignore
                 file_key=post_request.image_key,
                 upload_type=upload_type,
             )
+
+    async def get_recent_mission_posts_with_images(
+        self, session: AsyncSession, mission_id: int, limit: int = 6
+    ) -> list[MissionPost]:
+        recent_posts = await self.post_query_repository.get_recent_posts_by_mission(session, mission_id, limit)
+
+        tasks = [self._create_mission_post(user, post_images) for user, post_images in recent_posts]
+        results = await asyncio.gather(*tasks)
+
+        return [mission_post for mission_post in results if mission_post is not None]
+
+    async def _create_mission_post(self, user: User, post_images: list[PostImage]) -> MissionPost | None:
+        if not post_images:
+            return None
+
+        image_url = await asyncio.to_thread(self.media_service.get_presigned_download_url, post_images[0].file_key)
+
+        return MissionPost(
+            user_id=user.id,
+            nickname=user.nickname,
+            image_url=image_url,
+        )
