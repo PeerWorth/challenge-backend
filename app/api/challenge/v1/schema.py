@@ -50,8 +50,9 @@ class ChallengeListResponse(CamelBaseModel):
 
 class MissionPost(CamelBaseModel):
     user_id: int = Field(description="유저 ID")
+    post_id: int = Field(description="게시물 ID")
     nickname: str = Field(description="닉네임")
-    image_url: str = Field(description="이미지 URL (Presigned URL)")
+    image_url: str | None = Field(description="이미지 URL (Presigned URL)")
 
 
 class MissionInfoResponse(CamelBaseModel):

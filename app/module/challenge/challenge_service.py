@@ -161,7 +161,7 @@ class ChallengeService:
 
         return result
 
-    async def get_mission_info(self, session: AsyncSession, mission_id: int, user_id: int) -> MissionInfoResponse:
+    async def get_mission_info(self, session: AsyncSession, mission_id: int) -> MissionInfoResponse:
         mission: Mission | None = await self.mission_repository.get_by_id(session, mission_id)  # type: ignore
         if not mission:
             raise ValueError(f"미션 id {mission_id}가 존재하지 않습니다.")

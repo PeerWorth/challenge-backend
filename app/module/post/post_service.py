@@ -9,6 +9,7 @@ from app.model.post import Post, PostImage
 from app.model.user import User
 from app.module.media.enums import UploadType
 from app.module.media.media_service import MediaService
+from app.module.post.constants import INITIAL_POST_LIMIT
 from app.module.post.post_repository import PostRepository
 
 
@@ -45,23 +46,24 @@ class PostService:
             )
 
     async def get_recent_mission_posts_with_images(
-        self, session: AsyncSession, mission_id: int, limit: int = 6
+        self, session: AsyncSession, mission_id: int, limit: int = INITIAL_POST_LIMIT
     ) -> list[MissionPost]:
         recent_posts = await self.post_query_repository.get_recent_posts_by_mission(session, mission_id, limit)
 
-        tasks = [self._create_mission_post(user, post_images) for user, post_images in recent_posts]
+        tasks = [self._create_mission_post(post_id, user, post_images) for post_id, user, post_images in recent_posts]
         results = await asyncio.gather(*tasks)
 
-        return [mission_post for mission_post in results if mission_post is not None]
+        return results
 
-    async def _create_mission_post(self, user: User, post_images: list[PostImage]) -> MissionPost | None:
-        if not post_images:
-            return None
-
-        image_url = await asyncio.to_thread(self.media_service.get_presigned_download_url, post_images[0].file_key)
+    async def _create_mission_post(self, post_id: int, user: User, post_images: list[PostImage]) -> MissionPost:
+        image_url = None
+        if post_images:
+            first_image = post_images[0]
+            image_url = await asyncio.to_thread(self.media_service.get_presigned_download_url, first_image.file_key)
 
         return MissionPost(
             user_id=user.id,
+            post_id=post_id,
             nickname=user.nickname,
             image_url=image_url,
         )

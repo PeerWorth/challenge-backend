@@ -83,4 +83,4 @@ async def get_mission_info(
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> MissionInfoResponse:
-    return await challenge_service.get_mission_info(session, mission_id, payload.user_id_int)
+    return await challenge_service.get_mission_info(session, mission_id)
