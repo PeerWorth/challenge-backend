@@ -28,8 +28,8 @@ async def get_user_challenge_summary(
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> ChallengeInfoResponse:
-    current_challenge = await challenge_service.get_current_challenge(session, payload.user_id_int)
-    completed_challenges = await challenge_service.get_completed_challenges(session, payload.user_id_int)
+    current_challenge = await challenge_service.get_current_challenge(session, payload.user_id)
+    completed_challenges = await challenge_service.get_completed_challenges(session, payload.user_id)
 
     return ChallengeInfoResponse(current_challenge=current_challenge, completed_challenges=completed_challenges)
 
@@ -46,7 +46,7 @@ async def get_challenges(
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> ChallengeListResponse:
-    challenges = await challenge_service.get_all_challenges(session, payload.user_id_int)
+    challenges = await challenge_service.get_all_challenges(session, payload.user_id)
     return ChallengeListResponse(challenges=challenges)
 
 
@@ -65,7 +65,7 @@ async def create_participation(
 ) -> NewChallengeResponse:
     challenge_id = request_data.challenge_id
 
-    await challenge_service.start_new_challenge(session, challenge_id, payload.user_id_int)
+    await challenge_service.start_new_challenge(session, challenge_id, payload.user_id)
 
     return NewChallengeResponse(status_code=status.HTTP_201_CREATED)
 
