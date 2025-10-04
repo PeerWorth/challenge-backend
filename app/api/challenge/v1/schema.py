@@ -41,6 +41,7 @@ class ChallengeDetail(CamelBaseModel):
     title: str = Field(description="챌린지 제목")
     description: str = Field(description="챌린지 설명")
     total_points: int = Field(description="총 보상 금액")
+    status: str = Field(description="유저 챌린지 상태")
 
 
 class ChallengeListResponse(CamelBaseModel):

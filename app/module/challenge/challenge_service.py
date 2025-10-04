@@ -10,7 +10,7 @@ from app.module.challenge.challenge_repository import (
     UserMissionRepository,
 )
 from app.module.challenge.constants import FIRST_MISSION_STEP
-from app.module.challenge.enums import MissionStatusType
+from app.module.challenge.enums import ChallengeStatusType, MissionStatusType
 from app.module.challenge.errors import (
     ChallengeNotFoundError,
     MissionDataIncompleteError,
@@ -123,7 +123,7 @@ class ChallengeService:
             session, user_id, challenge_id, challenge_missions, FIRST_MISSION_STEP
         )
 
-    async def get_all_challenges(self, session: AsyncSession) -> list[ChallengeDetail]:
+    async def get_all_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeDetail]:
         challenges: list[Challenge] = await self.challenge_repository.find_all(session)
 
         if not challenges:
@@ -131,6 +131,9 @@ class ChallengeService:
 
         challenge_ids = [c.id for c in challenges]
         challenges_with_missions = await self.challenge_repository.get_multiple_with_missions(session, challenge_ids)
+
+        user_challenges: list[UserChallenge] = await self.user_challenge_repository.find_all(session, user_id=user_id)
+        user_challenge_status_map = {uc.challenge_id: uc.status for uc in user_challenges}
 
         result = []
         for challenge in challenges:
@@ -141,12 +144,15 @@ class ChallengeService:
             _, missions, _ = challenge_data
             total_points = sum(mission.point for mission in missions)
 
+            status = user_challenge_status_map.get(challenge.id, ChallengeStatusType.NOT_STARTED)
+
             result.append(
                 ChallengeDetail(
                     id=challenge.id,
                     title=challenge.title,
                     description=challenge.description,
                     total_points=total_points,
+                    status=status,
                 )
             )
 

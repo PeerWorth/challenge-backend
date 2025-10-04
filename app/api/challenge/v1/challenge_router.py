@@ -16,13 +16,13 @@ challenge_router = APIRouter(prefix="/v1")
 
 
 @challenge_router.get(
-    "/homepage",
+    "/summary",
     summary="유저의 홈 화면 정보를 반환합니다.",
     description="홈 화면 이동 시 처음 표시 될 정보를 반환합니다.",
     status_code=status.HTTP_200_OK,
     response_model=ChallengeInfoResponse,
 )
-async def get_user_challenge_info(
+async def get_user_challenge_summary(
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
@@ -40,23 +40,23 @@ async def get_user_challenge_info(
     status_code=status.HTTP_200_OK,
     response_model=ChallengeListResponse,
 )
-async def get_challenges_missions(
+async def get_challenges(
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> ChallengeListResponse:
-    challenges = await challenge_service.get_all_challenges(session)
+    challenges = await challenge_service.get_all_challenges(session, payload.user_id_int)
     return ChallengeListResponse(challenges=challenges)
 
 
 @challenge_router.post(
-    "/",
+    "/enrollments",
     summary="챌린지 수행 요청",
     description="다음 수행 할 챌린지를 요청합니다.",
     status_code=status.HTTP_201_CREATED,
     response_model=NewChallengeResponse,
 )
-async def create_user_challenge(
+async def create_participation(
     request_data: NewChallengeRequest,
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
@@ -67,3 +67,19 @@ async def create_user_challenge(
     await challenge_service.start_new_challenge(session, challenge_id, payload.user_id_int)
 
     return NewChallengeResponse(status_code=status.HTTP_201_CREATED)
+
+
+# @challenge_router.get(
+#     "/mission",
+#     summary="미션 정보를 반환합니다.",
+#     description="미션 정보를 반환합니다.",
+#     status_code=status.HTTP_200_OK,
+#     response_model=ChallengeListResponse,
+# )
+# async def get_mission_info(
+#     payload: JWTPayload = Depends(verify_access_token),
+#     session: AsyncSession = Depends(get_db_session),
+#     challenge_service: ChallengeService = Depends(),
+# ) -> ChallengeListResponse:
+
+#     return ChallengeListResponse(challenges='')
