@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.challenge.v1.schema import ChallengeDetail, ChallengeSummary
+from app.api.challenge.v1.schema import ChallengeDetail, ChallengeSummary, MissionInfoResponse
 from app.model.challenge import Challenge, ChallengeMission, Mission
 from app.model.user_challenge import UserChallenge, UserMission
 from app.module.challenge.challenge_repository import (
@@ -157,3 +157,30 @@ class ChallengeService:
             )
 
         return result
+
+    async def get_mission_info(self, session: AsyncSession, mission_id: int, user_id: int) -> MissionInfoResponse:
+        mission: Mission | None = await self.mission_repository.get_by_id(session, mission_id)  # type: ignore
+        if not mission:
+            raise ValueError(f"미션 id {mission_id}가 존재하지 않습니다.")
+
+        user_missions: list[UserMission] = await self.user_mission_repository.find_all(session, mission_id=mission_id)
+
+        user_mission = None
+        for um in user_missions:
+            user_challenge: UserChallenge | None = await self.user_challenge_repository.get_by_id(  # type: ignore
+                session, um.user_challenge_id
+            )
+            if user_challenge and user_challenge.user_id == user_id:
+                user_mission = um
+                break
+
+        status = user_mission.status if user_mission else MissionStatusType.NOT_STARTED
+
+        return MissionInfoResponse(
+            id=mission.id,
+            title=mission.title,
+            description=mission.description,
+            type=mission.type,
+            point=mission.point,
+            status=status,
+        )

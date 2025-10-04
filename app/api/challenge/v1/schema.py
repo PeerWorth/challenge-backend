@@ -46,3 +46,12 @@ class ChallengeDetail(CamelBaseModel):
 
 class ChallengeListResponse(CamelBaseModel):
     challenges: list[ChallengeDetail] = Field(description="챌린지 목록")
+
+
+class MissionInfoResponse(CamelBaseModel):
+    id: int = Field(description="미션 ID")
+    title: str = Field(description="미션 제목")
+    description: str = Field(description="미션 설명")
+    type: str = Field(description="미션 타입")
+    point: int = Field(description="보상 포인트")
+    status: str = Field(description="유저 미션 상태")

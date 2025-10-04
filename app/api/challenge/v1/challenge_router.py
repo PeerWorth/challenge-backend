@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.challenge.v1.schema import (
     ChallengeInfoResponse,
     ChallengeListResponse,
+    MissionInfoResponse,
     NewChallengeRequest,
     NewChallengeResponse,
 )
@@ -69,17 +70,17 @@ async def create_participation(
     return NewChallengeResponse(status_code=status.HTTP_201_CREATED)
 
 
-# @challenge_router.get(
-#     "/mission",
-#     summary="미션 정보를 반환합니다.",
-#     description="미션 정보를 반환합니다.",
-#     status_code=status.HTTP_200_OK,
-#     response_model=ChallengeListResponse,
-# )
-# async def get_mission_info(
-#     payload: JWTPayload = Depends(verify_access_token),
-#     session: AsyncSession = Depends(get_db_session),
-#     challenge_service: ChallengeService = Depends(),
-# ) -> ChallengeListResponse:
-
-#     return ChallengeListResponse(challenges='')
+@challenge_router.get(
+    "/missions/{mission_id}",
+    summary="미션 상세 정보 조회",
+    description="특정 미션의 상세 정보와 유저의 미션 수행 상태를 반환합니다.",
+    status_code=status.HTTP_200_OK,
+    response_model=MissionInfoResponse,
+)
+async def get_mission_info(
+    mission_id: int,
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    challenge_service: ChallengeService = Depends(),
+) -> MissionInfoResponse:
+    return await challenge_service.get_mission_info(session, mission_id, payload.user_id_int)
