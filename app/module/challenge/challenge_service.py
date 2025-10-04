@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.challenge.v1.schema import ChallengeDetail, ChallengeSummary
+from app.api.challenge.v1.schema import ChallengeDetail, ChallengeSummary, MissionInfoResponse
 from app.model.challenge import Challenge, ChallengeMission, Mission
 from app.model.user_challenge import UserChallenge, UserMission
 from app.module.challenge.challenge_repository import (
@@ -10,13 +10,14 @@ from app.module.challenge.challenge_repository import (
     UserMissionRepository,
 )
 from app.module.challenge.constants import FIRST_MISSION_STEP
-from app.module.challenge.enums import MissionStatusType
+from app.module.challenge.enums import ChallengeStatusType, MissionStatusType, MissionType
 from app.module.challenge.errors import (
     ChallengeNotFoundError,
     MissionDataIncompleteError,
     UserChallengeAlreadyInProgressError,
 )
 from app.module.challenge.serializers import ChallengeSerializer
+from app.module.post.post_service import PostService
 
 
 class ChallengeService:
@@ -25,6 +26,8 @@ class ChallengeService:
         self.mission_repository = MissionRepository()
         self.user_challenge_repository = UserChallengeRepository()
         self.user_mission_repository = UserMissionRepository()
+
+        self.post_service = PostService()
 
     async def get_current_challenge(self, session: AsyncSession, user_id: int) -> ChallengeSummary | None:
         current_user_challenge: UserChallenge | None = await self.user_challenge_repository.get_current_challenge(
@@ -123,7 +126,7 @@ class ChallengeService:
             session, user_id, challenge_id, challenge_missions, FIRST_MISSION_STEP
         )
 
-    async def get_all_challenges(self, session: AsyncSession) -> list[ChallengeDetail]:
+    async def get_all_challenges(self, session: AsyncSession, user_id: int) -> list[ChallengeDetail]:
         challenges: list[Challenge] = await self.challenge_repository.find_all(session)
 
         if not challenges:
@@ -131,6 +134,9 @@ class ChallengeService:
 
         challenge_ids = [c.id for c in challenges]
         challenges_with_missions = await self.challenge_repository.get_multiple_with_missions(session, challenge_ids)
+
+        user_challenges: list[UserChallenge] = await self.user_challenge_repository.find_all(session, user_id=user_id)
+        user_challenge_status_map = {uc.challenge_id: uc.status for uc in user_challenges}
 
         result = []
         for challenge in challenges:
@@ -141,13 +147,34 @@ class ChallengeService:
             _, missions, _ = challenge_data
             total_points = sum(mission.point for mission in missions)
 
+            status = user_challenge_status_map.get(challenge.id, ChallengeStatusType.NOT_STARTED)
+
             result.append(
                 ChallengeDetail(
                     id=challenge.id,
                     title=challenge.title,
                     description=challenge.description,
                     total_points=total_points,
+                    status=status,
                 )
             )
 
         return result
+
+    async def get_mission_info(self, session: AsyncSession, mission_id: int) -> MissionInfoResponse:
+        mission: Mission | None = await self.mission_repository.get_by_id(session, mission_id)  # type: ignore
+        if not mission:
+            raise ValueError(f"미션 id {mission_id}가 존재하지 않습니다.")
+
+        mission_posts = []
+        if mission.type == MissionType.PHOTO:
+            mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id)
+
+        return MissionInfoResponse(
+            id=mission.id,
+            title=mission.title,
+            description=mission.description,
+            type=mission.type,
+            point=mission.point,
+            posts=mission_posts,
+        )

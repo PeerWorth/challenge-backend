@@ -1,11 +1,12 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class JWTPayload(BaseModel):
     exp: int = Field(description="토큰 만료 시간 (Unix timestamp)")
     social_id: str = Field(description="사용자 social_id")
-    user_id: str = Field(description="내부 사용자 ID")
+    user_id: int = Field(description="내부 사용자 ID")
 
-    @property
-    def user_id_int(self) -> int:
-        return int(self.user_id)
+    @field_validator("user_id", mode="before")
+    @classmethod
+    def convert_user_id(cls, v: str | int) -> int:
+        return int(v) if isinstance(v, str) else v

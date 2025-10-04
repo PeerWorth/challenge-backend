@@ -25,7 +25,7 @@ async def submit_user_profile(
 ):
     await user_service.register_user_profile(
         session=session,
-        user_id=payload.user_id_int,
+        user_id=payload.user_id,
         request_data=request_data,
     )
 
