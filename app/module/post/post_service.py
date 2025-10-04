@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.challenge.v1.schema import MissionPost
 from app.api.post.v1.schema import PostRequest
 from app.database.generic_repository import GenericRepository
-from app.model.post import Post, PostImage
+from app.model.post import PostImage
 from app.model.user import User
 from app.module.media.enums import UploadType
 from app.module.media.media_service import MediaService
@@ -15,9 +15,8 @@ from app.module.post.post_repository import PostRepository
 
 class PostService:
     def __init__(self):
-        self.post_repository = GenericRepository(Post)
+        self.post_repository = PostRepository()
         self.post_image_repository = GenericRepository(PostImage)
-        self.post_query_repository = PostRepository()
         self.media_service = MediaService()
 
     async def add_post(
@@ -48,18 +47,17 @@ class PostService:
     async def get_recent_mission_posts_with_images(
         self, session: AsyncSession, mission_id: int, limit: int = INITIAL_POST_LIMIT
     ) -> list[MissionPost]:
-        recent_posts = await self.post_query_repository.get_recent_posts_by_mission(session, mission_id, limit)
+        recent_posts = await self.post_repository.get_recent_posts_by_mission(session, mission_id, limit)
 
-        tasks = [self._create_mission_post(post_id, user, post_images) for post_id, user, post_images in recent_posts]
+        tasks = [self._create_mission_post(post_id, user, post_image) for post_id, user, post_image in recent_posts]
         results = await asyncio.gather(*tasks)
 
         return results
 
-    async def _create_mission_post(self, post_id: int, user: User, post_images: list[PostImage]) -> MissionPost:
+    async def _create_mission_post(self, post_id: int, user: User, post_image: PostImage | None) -> MissionPost:
         image_url = None
-        if post_images:
-            first_image = post_images[0]
-            image_url = await asyncio.to_thread(self.media_service.get_presigned_download_url, first_image.file_key)
+        if post_image:
+            image_url = await asyncio.to_thread(self.media_service.get_presigned_download_url, post_image.file_key)
 
         return MissionPost(
             user_id=user.id,

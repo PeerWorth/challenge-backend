@@ -20,3 +20,9 @@ class ChallengeStatusType(StrEnum):
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+
+
+class MissionType(StrEnum):
+    PHOTO = "photo"
+    EVENT = "event"
+    SERVICE = "service"

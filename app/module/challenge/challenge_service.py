@@ -10,7 +10,7 @@ from app.module.challenge.challenge_repository import (
     UserMissionRepository,
 )
 from app.module.challenge.constants import FIRST_MISSION_STEP
-from app.module.challenge.enums import ChallengeStatusType, MissionStatusType
+from app.module.challenge.enums import ChallengeStatusType, MissionStatusType, MissionType
 from app.module.challenge.errors import (
     ChallengeNotFoundError,
     MissionDataIncompleteError,
@@ -166,7 +166,9 @@ class ChallengeService:
         if not mission:
             raise ValueError(f"미션 id {mission_id}가 존재하지 않습니다.")
 
-        mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id)
+        mission_posts = []
+        if mission.type == MissionType.PHOTO:
+            mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id)
 
         return MissionInfoResponse(
             id=mission.id,

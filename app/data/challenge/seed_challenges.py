@@ -1,25 +1,11 @@
-#!/usr/bin/env python
-"""
-챌린지 시드 데이터를 DB에 추가하는 스크립트
-
-사용법:
-    python scripts/seed_challenges.py              # 모든 데이터 추가
-    python scripts/seed_challenges.py --clear      # 기존 데이터 삭제 후 추가
-    python scripts/seed_challenges.py --dry-run    # 실행 시뮬레이션 (DB 변경 없음)
-"""
-
 import asyncio
 import os
 import sys
-from pathlib import Path
-
-# 프로젝트 루트 경로 추가
-sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy import delete, select  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
 
-from app.data.challenge.challenges import CHALLENGES_DATA  # noqa: E402
+from app.data.challenge.constants import CHALLENGES_DATA  # noqa: E402
 from app.database.config import get_async_session_maker  # noqa: E402
 from app.model.challenge import Challenge, ChallengeMission, Mission  # noqa: E402
 
