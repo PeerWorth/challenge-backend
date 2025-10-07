@@ -10,9 +10,9 @@ class User(TimestampMixin, table=True):  # type: ignore
     id: int = Field(default=None, primary_key=True)
     provider: str = Field(nullable=False)
     social_id: str = Field(nullable=False)
-    nickname: str = Field(nullable=False, unique=True)
-    birthday: int = Field(nullable=False)
-    gender: bool = Field(nullable=False)
+    nickname: str = Field(nullable=True, unique=True)
+    birthday: int = Field(nullable=True)
+    gender: str = Field(nullable=True)
 
     consent: list["UserConsent"] = Relationship(
         back_populates="user",

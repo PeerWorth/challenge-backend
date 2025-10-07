@@ -8,8 +8,12 @@ from app.common.utils.time import utc_now
 from app.database.generic_repository import GenericRepository
 from app.model.post import PostImage
 from app.model.user import User
-from app.module.challenge.challenge_repository import UserMissionRepository
-from app.module.challenge.enums import MissionStatusType
+from app.module.challenge.challenge_repository import (
+    ChallengeRepository,
+    UserChallengeRepository,
+    UserMissionRepository,
+)
+from app.module.challenge.enums import ChallengeStatusType, MissionStatusType
 from app.module.challenge.errors import UserMissionNotInProgressError
 from app.module.media.enums import UploadType
 from app.module.media.media_service import MediaService
@@ -23,6 +27,8 @@ class PostService:
         self.post_image_repository = GenericRepository(PostImage)
         self.media_service = MediaService()
         self.user_mission_repository = UserMissionRepository()
+        self.user_challenge_repository = UserChallengeRepository()
+        self.challenge_repository = ChallengeRepository()
 
     async def add_post(
         self,
@@ -30,27 +36,17 @@ class PostService:
         post_request: PostRequest,
         session: AsyncSession,
     ) -> None:
-        mission_id = post_request.mission_id
-
-        user_mission = await self.user_mission_repository.get_user_mission_in_progress(session, user_id, mission_id)
-        if not user_mission:
-            raise UserMissionNotInProgressError(user_id, mission_id)
+        user_mission = await self._validate_user_mission(session, user_id, post_request.mission_id)
 
         post = await self.post_repository.create(
             session,
             return_instance=True,
             user_id=user_id,
-            mission_id=mission_id,
+            mission_id=post_request.mission_id,
             content=post_request.content,
         )
 
-        if post_request.image_key:
-            await self.post_image_repository.create(
-                session,
-                post_id=post.id,  # type: ignore
-                file_key=post_request.image_key,
-                upload_type=UploadType.from_file_key(post_request.image_key),
-            )
+        await self._create_post_image_if_exists(session, post.id, post_request.image_key)  # type: ignore
 
         await self.user_mission_repository.update(
             session,
@@ -59,6 +55,43 @@ class PostService:
             post_id=post.id,  # type: ignore
             completed_at=utc_now(),
         )
+
+        await self._complete_challenge_if_finished(session, user_mission.user_challenge_id)
+
+    async def _validate_user_mission(self, session: AsyncSession, user_id: int, mission_id: int):
+        user_mission = await self.user_mission_repository.get_user_mission_in_progress(session, user_id, mission_id)
+        if not user_mission:
+            raise UserMissionNotInProgressError(user_id, mission_id)
+        return user_mission
+
+    async def _create_post_image_if_exists(self, session: AsyncSession, post_id: int, image_key: str | None) -> None:
+        if image_key:
+            await self.post_image_repository.create(
+                session,
+                post_id=post_id,
+                file_key=image_key,
+                upload_type=UploadType.from_file_key(image_key),
+            )
+
+    async def _complete_challenge_if_finished(self, session: AsyncSession, user_challenge_id: int) -> None:
+        user_challenge = await self.user_challenge_repository.get_by_id(session, user_challenge_id)
+        if not user_challenge:
+            return
+
+        is_finished = await self._is_challenge_finished(session, user_challenge)
+        if is_finished:
+            await self.user_challenge_repository.update(
+                session, user_challenge.id, status=ChallengeStatusType.COMPLETED  # type: ignore
+            )
+
+    async def _is_challenge_finished(self, session: AsyncSession, user_challenge) -> bool:
+        challenge_missions = await self.challenge_repository.get_challenge_missions(
+            session, user_challenge.challenge_id
+        )
+        completed_count = await self.user_mission_repository.count(
+            session, user_challenge_id=user_challenge.id, status=MissionStatusType.COMPLETED
+        )
+        return completed_count == len(challenge_missions)
 
     async def get_recent_mission_posts_with_images(
         self, session: AsyncSession, mission_id: int, limit: int = INITIAL_POST_LIMIT
