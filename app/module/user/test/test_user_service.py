@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.user.v1.schema import ProfileRequest
 from app.model.user import User, UserConsent
-from app.module.user.enums import AgreeTypes
+from app.module.user.enums import AgreeTypes, GenderTypes
 from app.module.user.error import UserNotFoundException
 from app.module.user.user_service import UserService
 
@@ -26,7 +26,7 @@ class TestUserService:
         user.social_id = "test_social_id_123"
         user.nickname = "기존닉네임"
         user.birthday = 1990
-        user.gender = True
+        user.gender = GenderTypes.MAN
         return user
 
     @pytest.fixture
@@ -36,12 +36,12 @@ class TestUserService:
         user.social_id = "test_social_id_123"
         user.nickname = "새닉네임"
         user.birthday = 1995
-        user.gender = False
+        user.gender = GenderTypes.WOMAN
         return user
 
     @pytest.fixture
     def profile_request(self):
-        return ProfileRequest(nickname="새닉네임", birthday=1995, gender=False)
+        return ProfileRequest(nickname="새닉네임", birthday=1995, gender=GenderTypes.WOMAN)
 
     @pytest.fixture
     def user_consent(self):
@@ -67,7 +67,7 @@ class TestUserService:
             user_id=user_id,
             nickname="새닉네임",
             birthday=1995,
-            gender=False,
+            gender=GenderTypes.WOMAN,
         )
 
         # Then
@@ -77,7 +77,7 @@ class TestUserService:
             instance=sample_user,
             nickname="새닉네임",
             birthday=1995,
-            gender=False,
+            gender=GenderTypes.WOMAN,
         )
 
     @pytest.mark.asyncio
@@ -165,7 +165,7 @@ class TestUserService:
             instance=sample_user,
             nickname="새닉네임",
             birthday=1995,
-            gender=False,
+            gender=GenderTypes.WOMAN,
         )
 
         assert user_service.user_consent_repository.upsert.call_count == 2
@@ -196,7 +196,7 @@ class TestUserService:
         self, user_service: UserService, mock_session, sample_user, user_consent
     ):
         # Given
-        profile_request = ProfileRequest(nickname="새닉네임", birthday=1995, gender=False)
+        profile_request = ProfileRequest(nickname="새닉네임", birthday=1995, gender=GenderTypes.WOMAN)
 
         user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)
