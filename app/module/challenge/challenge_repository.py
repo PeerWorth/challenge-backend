@@ -135,7 +135,7 @@ class UserChallengeRepository(GenericRepository):
             status = MissionStatusType.IN_PROGRESS if cm.step == initial_step else MissionStatusType.NOT_STARTED
             await user_mission_repo.create(
                 session,
-                user_challenge_id=user_challenge.id,
+                user_challenge_id=user_challenge.id,  # type: ignore
                 mission_id=cm.mission_id,
                 status=status,
                 point=0,
@@ -144,7 +144,7 @@ class UserChallengeRepository(GenericRepository):
         await session.commit()
         await session.refresh(user_challenge)
 
-        return user_challenge
+        return user_challenge  # type: ignore
 
 
 class UserMissionRepository(GenericRepository):
@@ -172,3 +172,18 @@ class UserMissionRepository(GenericRepository):
             grouped[um.user_challenge_id].append(um)
 
         return grouped
+
+    async def get_user_mission_in_progress(
+        self, session: AsyncSession, user_id: int, mission_id: int
+    ) -> UserMission | None:
+        stmt = (
+            select(UserMission)
+            .join(UserChallenge)
+            .where(
+                UserChallenge.user_id == user_id,
+                UserMission.mission_id == mission_id,
+                UserMission.status == MissionStatusType.IN_PROGRESS,
+            )
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()

@@ -48,3 +48,12 @@ class UserChallengeAlreadyInProgressError(ChallengeError):
     def __init__(self, user_id: int):
         self.user_id = user_id
         super().__init__(f"사용자 {user_id}는 이미 진행 중인 챌린지가 있습니다.")
+
+
+class UserMissionNotInProgressError(ChallengeError):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+
+    def __init__(self, user_id: int, mission_id: int):
+        self.user_id = user_id
+        self.mission_id = mission_id
+        super().__init__(f"사용자 {user_id}는 미션 {mission_id}를 진행 중이 아닙니다.")

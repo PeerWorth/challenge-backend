@@ -6,7 +6,6 @@ from app.database.dependency import get_db_session
 from app.module.auth.dependency import verify_access_token
 from app.module.auth.schemas import JWTPayload
 from app.module.post.post_service import PostService
-from app.module.user.user_service import UserService
 
 post_router = APIRouter(prefix="/v1")
 
@@ -23,12 +22,9 @@ async def add_post(
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
     post_service: PostService = Depends(),
-    user_service: UserService = Depends(),
 ):
-    user = await user_service.get_user_id_by_social_id(session, payload.social_id)
-
     await post_service.add_post(
-        user_id=user.id,
+        user_id=payload.user_id,
         post_request=request_data,
         session=session,
     )
