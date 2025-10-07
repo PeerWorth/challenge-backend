@@ -57,7 +57,7 @@ async def get_challenges(
     status_code=status.HTTP_201_CREATED,
     response_model=NewChallengeResponse,
 )
-async def create_participation(
+async def create_enrollment(
     request_data: NewChallengeRequest,
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),

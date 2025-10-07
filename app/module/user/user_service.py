@@ -14,12 +14,6 @@ class UserService:
         self.user_repository = GenericRepository(User)
         self.user_consent_repository = GenericRepository(UserConsent)
 
-    async def get_user_id_by_social_id(self, session: AsyncSession, social_id: str) -> User:
-        user = await self.user_repository.find_by_field(session, "social_id", social_id)
-        if not user:
-            raise UserNotFoundException()
-        return user  # type: ignore
-
     async def upsert_user_consent(
         self,
         session: AsyncSession,

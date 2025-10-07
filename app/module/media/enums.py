@@ -9,8 +9,10 @@ class UploadType(StrEnum):
     def from_file_key(cls, file_key: str) -> "UploadType":
         if file_key.startswith("profile/"):
             return cls.PROFILE
-        else:
+        elif file_key.startswith("content/"):
             return cls.CONTENT
+        else:
+            raise ValueError(f"Invalid file_key prefix: {file_key}")
 
 
 class S3ObjectStatus(StrEnum):
