@@ -12,6 +12,8 @@ from app.database.dependency import get_db_session
 from app.module.auth.dependency import verify_access_token
 from app.module.auth.schemas import JWTPayload
 from app.module.challenge.challenge_service import ChallengeService
+from app.module.challenge.schema import CurrentChallengeData
+from app.module.challenge.serializers import ChallengeSerializer
 
 challenge_router = APIRouter(prefix="/v1")
 
@@ -28,10 +30,32 @@ async def get_user_challenge_summary(
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> ChallengeInfoResponse:
-    current_challenge = await challenge_service.get_current_challenge(session, payload.user_id)
+    current_challenge_data: CurrentChallengeData | None = await challenge_service.get_current_challenge_context(
+        session, payload.user_id
+    )
+
+    current_challenge = None
+    current_mission = None
+    if current_challenge_data:
+        current_challenge = ChallengeSerializer.to_challenge_summary(
+            current_challenge_data.challenge,
+            current_challenge_data.missions,
+            current_challenge_data.challenge_missions,
+            current_challenge_data.user_challenge,
+            current_challenge_data.user_missions,
+        )
+        current_mission = ChallengeSerializer.to_current_mission_summary(
+            current_challenge_data.missions,
+            current_challenge_data.challenge_missions,
+            current_challenge_data.user_missions,
+            current_challenge_data.headcount,
+        )
+
     completed_challenges = await challenge_service.get_completed_challenges(session, payload.user_id)
 
-    return ChallengeInfoResponse(current_challenge=current_challenge, completed_challenges=completed_challenges)
+    return ChallengeInfoResponse(
+        current_mission=current_mission, current_challenge=current_challenge, completed_challenges=completed_challenges
+    )
 
 
 @challenge_router.get(

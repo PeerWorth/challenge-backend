@@ -57,3 +57,12 @@ class UserMissionNotInProgressError(ChallengeError):
         self.user_id = user_id
         self.mission_id = mission_id
         super().__init__(f"사용자 {user_id}는 미션 {mission_id}를 진행 중이 아닙니다.")
+
+
+class ChallengeAlreadyCompletedError(ChallengeError):
+    status_code: int = status.HTTP_409_CONFLICT
+
+    def __init__(self, user_id: int, challenge_id: int):
+        self.user_id = user_id
+        self.challenge_id = challenge_id
+        super().__init__(f"사용자 {user_id}는 이미 챌린지 {challenge_id}를 완료했습니다.")
