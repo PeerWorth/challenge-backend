@@ -19,6 +19,8 @@ def post_service():
         service.post_repository = Mock(spec=GenericRepository)
         service.post_image_repository = Mock(spec=GenericRepository)
         service.user_mission_repository = Mock(spec=GenericRepository)
+        service.user_challenge_repository = Mock(spec=GenericRepository)
+        service.challenge_repository = Mock(spec=GenericRepository)
         service.media_service = Mock()
     return service
 
@@ -44,12 +46,14 @@ class TestPostService:
         # given
         mock_user_mission = Mock(spec=UserMission)
         mock_user_mission.id = 10
+        mock_user_mission.user_challenge_id = 1
         mock_post = Mock(spec=Post)
         mock_post.id = 1
         post_service.user_mission_repository.get_user_mission_in_progress = AsyncMock(return_value=mock_user_mission)
         post_service.post_repository.create = AsyncMock(return_value=mock_post)
         post_service.post_image_repository.create = AsyncMock()
         post_service.user_mission_repository.update = AsyncMock()
+        post_service.user_challenge_repository.get_by_id = AsyncMock(return_value=None)
 
         # when
         await post_service.add_post(user_id=123, post_request=post_request, session=mock_session)
@@ -78,12 +82,14 @@ class TestPostService:
         # given
         mock_user_mission = Mock(spec=UserMission)
         mock_user_mission.id = 20
+        mock_user_mission.user_challenge_id = 1
         mock_post = Mock(spec=Post)
         mock_post.id = 1
         post_service.user_mission_repository.get_user_mission_in_progress = AsyncMock(return_value=mock_user_mission)
         post_service.post_repository.create = AsyncMock(return_value=mock_post)
         post_service.post_image_repository.create = AsyncMock()
         post_service.user_mission_repository.update = AsyncMock()
+        post_service.user_challenge_repository.get_by_id = AsyncMock(return_value=None)
 
         # when
         await post_service.add_post(user_id=123, post_request=post_request_without_image, session=mock_session)
@@ -111,12 +117,14 @@ class TestPostService:
         )
         mock_user_mission = Mock(spec=UserMission)
         mock_user_mission.id = 30
+        mock_user_mission.user_challenge_id = 1
         mock_post = Mock(spec=Post)
         mock_post.id = 3
         post_service.user_mission_repository.get_user_mission_in_progress = AsyncMock(return_value=mock_user_mission)
         post_service.post_repository.create = AsyncMock(return_value=mock_post)
         post_service.post_image_repository.create = AsyncMock()
         post_service.user_mission_repository.update = AsyncMock()
+        post_service.user_challenge_repository.get_by_id = AsyncMock(return_value=None)
 
         # when
         await post_service.add_post(user_id=789, post_request=profile_request, session=mock_session)
