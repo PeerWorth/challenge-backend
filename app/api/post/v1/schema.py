@@ -20,3 +20,7 @@ class PostInfoResponse(CamelBaseModel):
     nickname: str = Field(description="닉네임")
     like: int = Field(description="좋아요 개수")
     image_url: str | None = Field(description="이미지 URL (Presigned URL)")
+
+
+class PostLikeResponse(CamelBaseModel):
+    is_liked: bool = Field(description="좋아요 상태 (True: 좋아요 추가됨, False: 좋아요 취소됨)")

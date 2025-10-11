@@ -143,3 +143,13 @@ class PostService:
             like=like_count,
             image_url=image_url,
         )
+
+    async def toggle_post_like(self, session: AsyncSession, user_id: int, post_id: int) -> bool:
+        existing_like = await self.post_repository.get_post_like(session, user_id, post_id)
+
+        if existing_like:
+            await self.post_repository.delete_post_like(session, existing_like)
+            return False
+        else:
+            await self.post_repository.add_post_like(session, user_id, post_id)
+            return True

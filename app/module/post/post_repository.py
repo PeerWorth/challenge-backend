@@ -70,3 +70,16 @@ class PostRepository(GenericRepository):
             return None
 
         return (row[0], row[1], row[2], row[3])
+
+    async def get_post_like(self, session: AsyncSession, user_id: int, post_id: int) -> PostLike | None:
+        stmt = select(PostLike).where(PostLike.user_id == user_id, PostLike.post_id == post_id)  # type: ignore
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def add_post_like(self, session: AsyncSession, user_id: int, post_id: int) -> None:
+        post_like = PostLike(user_id=user_id, post_id=post_id)
+        session.add(post_like)
+        await session.flush()
+
+    async def delete_post_like(self, session: AsyncSession, post_like: PostLike) -> None:
+        await session.delete(post_like)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.post.v1.schema import PostInfoResponse, PostRequest, PostResponse
+from app.api.post.v1.schema import PostInfoResponse, PostLikeResponse, PostRequest, PostResponse
 from app.database.dependency import get_db_session
 from app.module.auth.dependency import verify_access_token
 from app.module.auth.schemas import JWTPayload
@@ -45,3 +45,20 @@ async def get_post_info(
     post_service: PostService = Depends(),
 ) -> PostInfoResponse:
     return await post_service.get_post_info(session, post_id)
+
+
+@post_router.post(
+    "/{post_id}/like",
+    summary="게시물 좋아요 토글",
+    description="게시물에 좋아요를 추가하거나 취소합니다.",
+    status_code=status.HTTP_200_OK,
+    response_model=PostLikeResponse,
+)
+async def toggle_post_like(
+    post_id: int,
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    post_service: PostService = Depends(),
+) -> PostLikeResponse:
+    is_liked = await post_service.toggle_post_like(session, payload.user_id, post_id)
+    return PostLikeResponse(is_liked=is_liked)
