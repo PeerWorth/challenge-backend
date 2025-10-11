@@ -70,4 +70,10 @@ class MissionInfoResponse(CamelBaseModel):
     type: str = Field(description="미션 타입")
     point: int = Field(description="보상 포인트")
     headcount: int = Field(description="미션 참여 인원")
+    next_cursor: int | None = Field(description="다음 페이지를 위한 커서 (마지막 post_id)")
     posts: list[MissionPost] = Field(description="미션 관련 게시물 목록 (최신 6개)")
+
+
+class MissionPostsResponse(CamelBaseModel):
+    posts: list[MissionPost] = Field(description="미션 관련 게시물 목록")
+    next_cursor: int | None = Field(description="다음 페이지를 위한 커서 (마지막 post_id)")

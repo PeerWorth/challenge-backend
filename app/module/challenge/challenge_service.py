@@ -1,6 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.challenge.v1.schema import ChallengeDetail, ChallengeSummary, MissionInfoResponse
+from app.api.challenge.v1.schema import (
+    ChallengeDetail,
+    ChallengeSummary,
+    MissionInfoResponse,
+    MissionPost,
+    MissionPostsResponse,
+)
 from app.model.challenge import Challenge, ChallengeMission, Mission
 from app.model.user_challenge import UserChallenge, UserMission
 from app.module.challenge.challenge_repository import (
@@ -168,7 +174,11 @@ class ChallengeService:
 
         headcount = await self.mission_repository.count_participants(session, mission_id)
 
-        mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id, limit)
+        mission_posts: list[MissionPost] = await self.post_service.get_mission_posts_paginated(
+            session, mission_id, limit
+        )
+
+        next_cursor = min(post.post_id for post in mission_posts) if mission_posts else None
 
         return MissionInfoResponse(
             id=mission.id,
@@ -178,4 +188,17 @@ class ChallengeService:
             point=mission.point,
             headcount=headcount,
             posts=mission_posts,
+            next_cursor=next_cursor,
+        )
+
+    async def get_mission_posts(
+        self, session: AsyncSession, mission_id: int, limit: int, cursor: int | None
+    ) -> MissionPostsResponse:
+        mission_posts = await self.post_service.get_mission_posts_paginated(session, mission_id, limit, cursor)
+
+        next_cursor = min(post.post_id for post in mission_posts) if mission_posts else None
+
+        return MissionPostsResponse(
+            posts=mission_posts,
+            next_cursor=next_cursor,
         )

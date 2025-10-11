@@ -5,6 +5,7 @@ from app.api.challenge.v1.schema import (
     ChallengeInfoResponse,
     ChallengeListResponse,
     MissionInfoResponse,
+    MissionPostsResponse,
     NewChallengeRequest,
     NewChallengeResponse,
 )
@@ -14,7 +15,7 @@ from app.module.auth.schemas import JWTPayload
 from app.module.challenge.challenge_service import ChallengeService
 from app.module.challenge.schema import CurrentChallengeData
 from app.module.challenge.serializers import ChallengeSerializer
-from app.module.post.constants import INITIAL_POST_LIMIT
+from app.module.post.constants import PAGE_POST_LIMIT
 
 challenge_router = APIRouter(prefix="/v1")
 
@@ -104,9 +105,28 @@ async def create_enrollment(
 )
 async def get_mission_info(
     mission_id: int,
-    limit: int = INITIAL_POST_LIMIT,
+    limit: int = PAGE_POST_LIMIT,
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> MissionInfoResponse:
     return await challenge_service.get_mission_info(session, mission_id, limit)
+
+
+@challenge_router.get(
+    "/missions/{mission_id}/posts",
+    summary="미션 포스트 목록 조회 (Pagination)",
+    description="특정 미션의 포스트를 cursor 기반 pagination으로 조회합니다.",
+    status_code=status.HTTP_200_OK,
+    response_model=MissionPostsResponse,
+)
+async def get_mission_posts(
+    mission_id: int,
+    limit: int = PAGE_POST_LIMIT,
+    cursor: int | None = None,
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    challenge_service: ChallengeService = Depends(),
+) -> MissionPostsResponse:
+    print(f"{cursor=}")
+    return await challenge_service.get_mission_posts(session, mission_id, limit, cursor)

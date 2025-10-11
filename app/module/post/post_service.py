@@ -102,6 +102,16 @@ class PostService:
 
         return results
 
+    async def get_mission_posts_paginated(
+        self, session: AsyncSession, mission_id: int, limit: int, cursor: int | None = None
+    ) -> list[MissionPost]:
+        posts = await self.post_repository.get_posts_by_mission_with_cursor(session, mission_id, limit, cursor)
+
+        tasks = [self._create_mission_post(post_id, user, post_image) for post_id, user, post_image in posts]
+        results = await asyncio.gather(*tasks)
+
+        return results
+
     async def _create_mission_post(self, post_id: int, user: User, post_image: PostImage | None) -> MissionPost:
         image_url = None
         if post_image:
