@@ -51,8 +51,8 @@ class PostLike(TimestampMixin, table=True):  # type: ignore
     __table_args__ = (UniqueConstraint("user_id", "post_id"),)
 
     id: int = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id", nullable=False)
-    post_id: int = Field(foreign_key="post.id", nullable=False)
+    user_id: int = Field(foreign_key="user.id", nullable=False, index=True)
+    post_id: int = Field(foreign_key="post.id", nullable=False, index=True)
 
     user: "User" = Relationship()
     post: "Post" = Relationship(back_populates="likes")

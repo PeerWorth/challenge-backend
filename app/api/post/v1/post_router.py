@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.post.v1.schema import PostRequest, PostResponse
+from app.api.post.v1.schema import PostInfoResponse, PostRequest, PostResponse
 from app.database.dependency import get_db_session
 from app.module.auth.dependency import verify_access_token
 from app.module.auth.schemas import JWTPayload
@@ -29,3 +29,19 @@ async def add_post(
         session=session,
     )
     return PostResponse(success=True, status_code=status.HTTP_201_CREATED)
+
+
+@post_router.get(
+    "/{post_id}",
+    summary="게시물 상세 정보 조회",
+    description="게시물의 상세 정보를 반환합니다.",
+    status_code=status.HTTP_200_OK,
+    response_model=PostInfoResponse,
+)
+async def get_post_info(
+    post_id: int,
+    payload: JWTPayload = Depends(verify_access_token),
+    session: AsyncSession = Depends(get_db_session),
+    post_service: PostService = Depends(),
+) -> PostInfoResponse:
+    return await post_service.get_post_info(session, post_id)

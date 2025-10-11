@@ -12,3 +12,11 @@ class PostRequest(CamelBaseModel):
 class PostResponse(CamelBaseModel):
     success: bool
     status_code: int
+
+
+class PostInfoResponse(CamelBaseModel):
+    user_id: int = Field(description="유저 ID")
+    post_id: int = Field(description="게시물 ID")
+    nickname: str = Field(description="닉네임")
+    like: int = Field(description="좋아요 개수")
+    image_url: str | None = Field(description="이미지 URL (Presigned URL)")
