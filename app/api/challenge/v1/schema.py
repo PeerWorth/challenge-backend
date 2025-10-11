@@ -3,13 +3,6 @@ from pydantic import Field
 from app.common.schema import CamelBaseModel
 
 
-class MissionPost(CamelBaseModel):
-    user_id: int = Field(description="유저 ID")
-    post_id: int = Field(description="게시물 ID")
-    nickname: str = Field(description="닉네임")
-    image_url: str | None = Field(description="이미지 URL (Presigned URL)")
-
-
 class MissionBasic(CamelBaseModel):
     id: int = Field(description="미션 ID")
     title: str = Field(description="미션 제목")
@@ -25,6 +18,7 @@ class MissionSummary(CamelBaseModel):
     point: int = Field(description="보상 금액")
     status: str = Field(description="미션 상태")
     type: str = Field(description="미션 타입")
+    headcount: int = Field(description="미션 참여 인원")
 
 
 class ChallengeSummary(CamelBaseModel):
@@ -62,10 +56,24 @@ class ChallengeListResponse(CamelBaseModel):
     challenges: list[ChallengeDetail] = Field(description="챌린지 목록")
 
 
+class MissionPost(CamelBaseModel):
+    user_id: int = Field(description="유저 ID")
+    post_id: int = Field(description="게시물 ID")
+    nickname: str = Field(description="닉네임")
+    image_url: str | None = Field(description="이미지 URL (Presigned URL)")
+
+
 class MissionInfoResponse(CamelBaseModel):
     id: int = Field(description="미션 ID")
     title: str = Field(description="미션 제목")
     description: str = Field(description="미션 설명")
     type: str = Field(description="미션 타입")
     point: int = Field(description="보상 포인트")
+    headcount: int = Field(description="미션 참여 인원")
+    next_cursor: int | None = Field(description="다음 페이지를 위한 커서 (마지막 post_id)")
     posts: list[MissionPost] = Field(description="미션 관련 게시물 목록 (최신 6개)")
+
+
+class MissionPostsResponse(CamelBaseModel):
+    posts: list[MissionPost] = Field(description="미션 관련 게시물 목록")
+    next_cursor: int | None = Field(description="다음 페이지를 위한 커서 (마지막 post_id)")
