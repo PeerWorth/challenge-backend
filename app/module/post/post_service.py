@@ -3,7 +3,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.challenge.v1.schema import MissionPost
-from app.api.post.v1.schema import PostRequest
+from app.api.post.v1.schema import PostInfoResponse, PostRequest
 from app.common.utils.time import utc_now
 from app.database.generic_repository import GenericRepository
 from app.model.post import PostImage
@@ -123,3 +123,33 @@ class PostService:
             nickname=user.nickname,
             image_url=image_url,
         )
+
+    async def get_post_info(self, session: AsyncSession, post_id: int) -> PostInfoResponse:
+        post_data = await self.post_repository.get_post_info(session, post_id)
+
+        if not post_data:
+            raise ValueError(f"Post {post_id}가 존재하지 않습니다.")
+
+        post_id, user, post_image, like_count = post_data
+
+        image_url = None
+        if post_image:
+            image_url = await asyncio.to_thread(self.media_service.get_presigned_view_url, post_image.file_key)
+
+        return PostInfoResponse(
+            user_id=user.id,
+            post_id=post_id,
+            nickname=user.nickname,
+            like=like_count,
+            image_url=image_url,
+        )
+
+    async def toggle_post_like(self, session: AsyncSession, user_id: int, post_id: int) -> bool:
+        existing_like = await self.post_repository.get_post_like(session, user_id, post_id)
+
+        if existing_like:
+            await self.post_repository.delete_post_like(session, existing_like)
+            return False
+        else:
+            await self.post_repository.add_post_like(session, user_id, post_id)
+            return True

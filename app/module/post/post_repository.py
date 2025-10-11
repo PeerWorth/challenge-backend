@@ -1,8 +1,8 @@
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.generic_repository import GenericRepository
-from app.model.post import Post, PostImage
+from app.model.post import Post, PostImage, PostLike
 from app.model.user import User
 
 
@@ -46,3 +46,40 @@ class PostRepository(GenericRepository):
         rows = result.all()
 
         return [(post_id, user, post_image) for post_id, user, post_image in rows]
+
+    async def get_post_info(
+        self, session: AsyncSession, post_id: int
+    ) -> tuple[int, User, PostImage | None, int] | None:
+        like_count_subquery = (
+            select(func.count(PostLike.id))  # type: ignore
+            .where(PostLike.post_id == post_id)  # type: ignore
+            .scalar_subquery()
+        )
+
+        stmt = (
+            select(Post.id, User, PostImage, like_count_subquery)  # type: ignore
+            .join(User, Post.user_id == User.id)  # type: ignore
+            .outerjoin(PostImage, PostImage.post_id == Post.id)  # type: ignore
+            .where(Post.id == post_id)  # type: ignore
+        )
+
+        result = await session.execute(stmt)
+        row = result.first()
+
+        if not row:
+            return None
+
+        return (row[0], row[1], row[2], row[3])
+
+    async def get_post_like(self, session: AsyncSession, user_id: int, post_id: int) -> PostLike | None:
+        stmt = select(PostLike).where(PostLike.user_id == user_id, PostLike.post_id == post_id)  # type: ignore
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def add_post_like(self, session: AsyncSession, user_id: int, post_id: int) -> None:
+        post_like = PostLike(user_id=user_id, post_id=post_id)
+        session.add(post_like)
+        await session.flush()
+
+    async def delete_post_like(self, session: AsyncSession, post_like: PostLike) -> None:
+        await session.delete(post_like)
