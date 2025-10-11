@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from sqlmodel import Field, Relationship, UniqueConstraint
 
 from app.common.mixin.timestamp import TimestampMixin
+
+if TYPE_CHECKING:
+    from app.model.badge import UserBadge
 
 
 class User(TimestampMixin, table=True):  # type: ignore
@@ -15,6 +20,13 @@ class User(TimestampMixin, table=True):  # type: ignore
     gender: str = Field(nullable=True)
 
     consent: list["UserConsent"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "passive_deletes": True,
+        },
+    )
+    user_badges: list["UserBadge"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={
             "cascade": "all, delete-orphan",

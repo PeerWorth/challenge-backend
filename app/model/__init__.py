@@ -1,3 +1,4 @@
+from app.model.badge import Badge, UserBadge
 from app.model.challenge import Challenge, Mission
 from app.model.post import Post, PostImage
 from app.model.user import User, UserConsent
@@ -12,4 +13,6 @@ __all__ = [
     "Mission",
     "UserChallenge",
     "UserMission",
+    "Badge",
+    "UserBadge",
 ]
