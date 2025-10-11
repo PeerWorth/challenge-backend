@@ -17,7 +17,6 @@ from app.module.challenge.enums import ChallengeStatusType, MissionStatusType
 from app.module.challenge.errors import UserMissionNotInProgressError
 from app.module.media.enums import UploadType
 from app.module.media.media_service import MediaService
-from app.module.post.constants import INITIAL_POST_LIMIT
 from app.module.post.post_repository import PostRepository
 
 
@@ -94,7 +93,7 @@ class PostService:
         return completed_count == len(challenge_missions)
 
     async def get_recent_mission_posts_with_images(
-        self, session: AsyncSession, mission_id: int, limit: int = INITIAL_POST_LIMIT
+        self, session: AsyncSession, mission_id: int, limit: int
     ) -> list[MissionPost]:
         recent_posts = await self.post_repository.get_recent_posts_by_mission(session, mission_id, limit)
 
@@ -106,7 +105,7 @@ class PostService:
     async def _create_mission_post(self, post_id: int, user: User, post_image: PostImage | None) -> MissionPost:
         image_url = None
         if post_image:
-            image_url = await asyncio.to_thread(self.media_service.get_presigned_download_url, post_image.file_key)
+            image_url = await asyncio.to_thread(self.media_service.get_presigned_view_url, post_image.file_key)
 
         return MissionPost(
             user_id=user.id,

@@ -14,6 +14,7 @@ from app.module.auth.schemas import JWTPayload
 from app.module.challenge.challenge_service import ChallengeService
 from app.module.challenge.schema import CurrentChallengeData
 from app.module.challenge.serializers import ChallengeSerializer
+from app.module.post.constants import INITIAL_POST_LIMIT
 
 challenge_router = APIRouter(prefix="/v1")
 
@@ -103,8 +104,9 @@ async def create_enrollment(
 )
 async def get_mission_info(
     mission_id: int,
+    limit: int = INITIAL_POST_LIMIT,
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> MissionInfoResponse:
-    return await challenge_service.get_mission_info(session, mission_id)
+    return await challenge_service.get_mission_info(session, mission_id, limit)

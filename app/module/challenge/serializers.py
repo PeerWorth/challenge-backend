@@ -76,6 +76,7 @@ class ChallengeSerializer:
                     point=mission.point,
                     status=user_mission.status,
                     type=mission.type,
+                    headcount=headcount or 0,
                 )
 
         return None

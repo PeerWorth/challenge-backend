@@ -88,3 +88,20 @@ class MediaService:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
             error_message = e.response.get("Error", {}).get("Message", "Unknown error")
             raise Exception(f"S3 presigned URL 생성 실패: {error_code} - {error_message}")
+
+    def get_presigned_view_url(self, file_key: str) -> str:
+        try:
+            return self.s3_client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": self.bucket_name,
+                    "Key": file_key,
+                    "ResponseContentType": "image/jpeg",
+                    "ResponseContentDisposition": "inline",
+                },
+                ExpiresIn=self.presigned_url_expiration,
+            )
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            error_message = e.response.get("Error", {}).get("Message", "Unknown error")
+            raise Exception(f"S3 presigned URL 생성 실패: {error_code} - {error_message}")

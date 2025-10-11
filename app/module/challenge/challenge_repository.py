@@ -93,10 +93,9 @@ class MissionRepository(GenericRepository):
     def __init__(self):
         super().__init__(Mission)
 
-    async def count_participants(self, session: AsyncSession, mission_id: int, status: str | None = None) -> int:
-        if status is None:
-            status = MissionStatusType.IN_PROGRESS
-
+    async def count_participants(
+        self, session: AsyncSession, mission_id: int, status: str = MissionStatusType.IN_PROGRESS
+    ) -> int:
         stmt = select(func.count(UserMission.id)).where(  # type: ignore
             UserMission.mission_id == mission_id, UserMission.status == status  # type: ignore
         )

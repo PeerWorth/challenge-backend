@@ -10,7 +10,7 @@ from app.module.challenge.challenge_repository import (
     UserMissionRepository,
 )
 from app.module.challenge.constants import FIRST_MISSION_STEP
-from app.module.challenge.enums import ChallengeStatusType, MissionStatusType, MissionType
+from app.module.challenge.enums import ChallengeStatusType, MissionStatusType
 from app.module.challenge.errors import (
     ChallengeAlreadyCompletedError,
     ChallengeNotFoundError,
@@ -161,14 +161,14 @@ class ChallengeService:
 
         return result
 
-    async def get_mission_info(self, session: AsyncSession, mission_id: int) -> MissionInfoResponse:
+    async def get_mission_info(self, session: AsyncSession, mission_id: int, limit: int) -> MissionInfoResponse:
         mission: Mission | None = await self.mission_repository.get_by_id(session, mission_id)  # type: ignore
         if not mission:
             raise ValueError(f"미션 id {mission_id}가 존재하지 않습니다.")
 
-        mission_posts = []
-        if mission.type == MissionType.PHOTO:
-            mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id)
+        headcount = await self.mission_repository.count_participants(session, mission_id)
+
+        mission_posts = await self.post_service.get_recent_mission_posts_with_images(session, mission_id, limit)
 
         return MissionInfoResponse(
             id=mission.id,
@@ -176,5 +176,6 @@ class ChallengeService:
             description=mission.description,
             type=mission.type,
             point=mission.point,
+            headcount=headcount,
             posts=mission_posts,
         )
