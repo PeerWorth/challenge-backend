@@ -83,3 +83,8 @@ class PostRepository(GenericRepository):
 
     async def delete_post_like(self, session: AsyncSession, post_like: PostLike) -> None:
         await session.delete(post_like)
+
+    async def get_post_like_count(self, session: AsyncSession, post_id: int) -> int:
+        stmt = select(func.count(PostLike.id)).where(PostLike.post_id == post_id)  # type: ignore
+        result = await session.execute(stmt)
+        return result.scalar() or 0

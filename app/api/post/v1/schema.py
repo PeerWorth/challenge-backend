@@ -24,3 +24,4 @@ class PostInfoResponse(CamelBaseModel):
 
 class PostLikeResponse(CamelBaseModel):
     is_liked: bool = Field(description="좋아요 상태 (True: 좋아요 추가됨, False: 좋아요 취소됨)")
+    like_count: int = Field(description="현재 게시물의 총 좋아요 개수")
