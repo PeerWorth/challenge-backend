@@ -16,7 +16,7 @@ class User(TimestampMixin, table=True):  # type: ignore
     provider: str = Field(nullable=False)
     social_id: str = Field(nullable=False)
     nickname: str = Field(nullable=True, unique=True)
-    birthday: int = Field(nullable=True)
+    birth_year: int = Field(nullable=True)
     gender: str = Field(nullable=True)
 
     consent: list["UserConsent"] = Relationship(

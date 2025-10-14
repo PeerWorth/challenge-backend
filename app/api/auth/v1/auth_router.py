@@ -31,5 +31,5 @@ async def sign_up_login(
     access_token = jwt_service.generate_access_token(social_id, user.id)
 
     return OAuthResponse(
-        access_token=access_token, is_new_user=not bool(user.nickname and user.birthday and user.gender)
+        access_token=access_token, is_new_user=not bool(user.nickname and user.birth_year and user.gender)
     )

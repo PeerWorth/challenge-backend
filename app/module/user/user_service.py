@@ -60,7 +60,7 @@ class UserService:
             session=session,
             user_id=user_id,
             nickname=request_data.nickname,
-            birthday=request_data.birthday,
+            birth_year=request_data.birth_year,
             gender=request_data.gender,
         )
 

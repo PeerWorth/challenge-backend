@@ -5,6 +5,7 @@ from app.api.post.v1.schema import PostInfoResponse, PostLikeResponse, PostReque
 from app.database.dependency import get_db_session
 from app.module.auth.dependency import verify_access_token
 from app.module.auth.schemas import JWTPayload
+from app.module.badge.badge_service import BadgeService
 from app.module.post.post_service import PostService
 
 post_router = APIRouter(prefix="/v1")
@@ -22,12 +23,16 @@ async def add_post(
     payload: JWTPayload = Depends(verify_access_token),
     session: AsyncSession = Depends(get_db_session),
     post_service: PostService = Depends(),
+    badge_service: BadgeService = Depends(),
 ):
     await post_service.add_post(
         user_id=payload.user_id,
         post_request=request_data,
         session=session,
     )
+
+    await badge_service.initial_badge(session, payload.user_id)
+
     return PostResponse(success=True, status_code=status.HTTP_201_CREATED)
 
 

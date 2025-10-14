@@ -34,4 +34,4 @@ class UserBadge(TimestampMixin, table=True):  # type: ignore
     badge_id: int = Field(foreign_key="badge.id", nullable=False, index=True)
 
     user: "User" = Relationship(back_populates="user_badges")
-    badge: "Badge" = Relationship(back_populates="user_badges")
+    badge: Badge = Relationship(back_populates="user_badges")
