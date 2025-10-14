@@ -79,6 +79,17 @@ async def custom_exception_handler(request: Request, exc: AuthException | UserEx
     return JSONResponse(status_code=exc.status_code, content=error_response.model_dump(by_alias=True))
 
 
+async def value_error_exception_handler(_: Request, exc: ValueError) -> JSONResponse:
+    error_response = ErrorResponse(
+        code=status.HTTP_400_BAD_REQUEST,
+        message=str(exc),
+        error="ValueError",
+        success=False,
+    )
+
+    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=error_response.model_dump(by_alias=True))
+
+
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     error_response = ErrorResponse(
         code=status.HTTP_500_INTERNAL_SERVER_ERROR,
