@@ -25,7 +25,7 @@ class TestUserService:
         user.id = 1
         user.social_id = "test_social_id_123"
         user.nickname = "기존닉네임"
-        user.birthday = 1990
+        user.birth_year = 1990
         user.gender = GenderTypes.MAN
         return user
 
@@ -35,13 +35,13 @@ class TestUserService:
         user.id = 1
         user.social_id = "test_social_id_123"
         user.nickname = "새닉네임"
-        user.birthday = 1995
+        user.birth_year = 1995
         user.gender = GenderTypes.WOMAN
         return user
 
     @pytest.fixture
     def profile_request(self):
-        return ProfileRequest(nickname="새닉네임", birthday=1995, gender=GenderTypes.WOMAN)
+        return ProfileRequest(nickname="새닉네임", birth_year=1995, gender=GenderTypes.WOMAN)
 
     @pytest.fixture
     def user_consent(self):
@@ -66,7 +66,7 @@ class TestUserService:
             session=mock_session,
             user_id=user_id,
             nickname="새닉네임",
-            birthday=1995,
+            birth_year=1995,
             gender=GenderTypes.WOMAN,
         )
 
@@ -76,7 +76,7 @@ class TestUserService:
             session=mock_session,
             instance=sample_user,
             nickname="새닉네임",
-            birthday=1995,
+            birth_year=1995,
             gender=GenderTypes.WOMAN,
         )
 
@@ -164,7 +164,7 @@ class TestUserService:
             session=mock_session,
             instance=sample_user,
             nickname="새닉네임",
-            birthday=1995,
+            birth_year=1995,
             gender=GenderTypes.WOMAN,
         )
 
@@ -196,7 +196,7 @@ class TestUserService:
         self, user_service: UserService, mock_session, sample_user, user_consent
     ):
         # Given
-        profile_request = ProfileRequest(nickname="새닉네임", birthday=1995, gender=GenderTypes.WOMAN)
+        profile_request = ProfileRequest(nickname="새닉네임", birth_year=1995, gender=GenderTypes.WOMAN)
 
         user_service.user_repository.get_by_id = AsyncMock(return_value=sample_user)
         user_service.user_repository.update_instance = AsyncMock(return_value=sample_user)

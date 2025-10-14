@@ -15,7 +15,6 @@ class Badge(TimestampMixin, table=True):  # type: ignore
     category: str = Field(nullable=False)
     name: str = Field(nullable=False)
     description: str = Field(nullable=False)
-    condition_type: str = Field(nullable=False, unique=True)
 
     user_badges: list["UserBadge"] = Relationship(
         back_populates="badge",
@@ -35,4 +34,4 @@ class UserBadge(TimestampMixin, table=True):  # type: ignore
     badge_id: int = Field(foreign_key="badge.id", nullable=False, index=True)
 
     user: "User" = Relationship(back_populates="user_badges")
-    badge: "Badge" = Relationship(back_populates="user_badges")
+    badge: Badge = Relationship(back_populates="user_badges")
