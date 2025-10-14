@@ -128,5 +128,4 @@ async def get_mission_posts(
     session: AsyncSession = Depends(get_db_session),
     challenge_service: ChallengeService = Depends(),
 ) -> MissionPostsResponse:
-    print(f"{cursor=}")
     return await challenge_service.get_mission_posts(session, mission_id, limit, cursor)

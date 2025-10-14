@@ -65,5 +65,5 @@ async def toggle_post_like(
     session: AsyncSession = Depends(get_db_session),
     post_service: PostService = Depends(),
 ) -> PostLikeResponse:
-    is_liked = await post_service.toggle_post_like(session, payload.user_id, post_id)
-    return PostLikeResponse(is_liked=is_liked)
+    is_liked, like_count = await post_service.toggle_post_like(session, payload.user_id, post_id)
+    return PostLikeResponse(is_liked=is_liked, like_count=like_count)
