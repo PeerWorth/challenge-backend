@@ -15,7 +15,6 @@ class Badge(TimestampMixin, table=True):  # type: ignore
     category: str = Field(nullable=False)
     name: str = Field(nullable=False)
     description: str = Field(nullable=False)
-    condition_type: str = Field(nullable=False, unique=True)
 
     user_badges: list["UserBadge"] = Relationship(
         back_populates="badge",
