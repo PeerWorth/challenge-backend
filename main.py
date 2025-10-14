@@ -17,6 +17,7 @@ from app.common.exception_handlers import (
     pydantic_validation_exception_handler,
     starlette_http_exception_handler,
     validation_exception_handler,
+    value_error_exception_handler,
 )
 from app.module.auth.error import AuthException
 from app.module.challenge.errors import ChallengeError
@@ -39,6 +40,7 @@ app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
 app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(ValidationError, pydantic_validation_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(ValueError, value_error_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(Exception, general_exception_handler)
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
